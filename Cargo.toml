@@ -1,0 +1,8 @@
+[workspace]
+members = [
+    "geymsla-server",
+    "geymsla-client"
+]
+
+[profile.dev]
+opt-level = 3
