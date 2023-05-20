@@ -31,9 +31,14 @@ name = "geymsla-client"
 version = "0.1.0"
 
 [[package]]
+name = "geymsla-lib"
+version = "0.1.0"
+
+[[package]]
 name = "geymsla-server"
 version = "0.1.0"
 dependencies = [
+ "geymsla-lib",
  "tokio",
 ]
 

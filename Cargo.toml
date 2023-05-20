@@ -1,7 +1,8 @@
 [workspace]
 members = [
     "geymsla-server",
-    "geymsla-client"
+    "geymsla-client",
+    "geymsla-lib"
 ]
 
 [profile.dev]
