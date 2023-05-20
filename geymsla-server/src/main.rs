@@ -1,4 +1,4 @@
-use geymsla_lib::Geymsla;
+use geymsla_lib::store::Gamur;
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::TcpListener,
@@ -11,14 +11,14 @@ const DEFAULT_GEYMSLA_PORT: usize = 9876;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let geymsla = Arc::new(Mutex::new(Geymsla::empty()));
+    let store = Arc::new(Mutex::new(Gamur::empty()));
     let addr = format!("0.0.0.0:{}", DEFAULT_GEYMSLA_PORT);
     let listener = TcpListener::bind(&addr).await?;
 
     println!("Started Geymsla server");
     loop {
         let (mut client, _) = listener.accept().await?;
-        let store = Arc::clone(&geymsla);
+        let store = Arc::clone(&store);
 
         println!("Accepted new client: {}", &client.peer_addr()?);
 
