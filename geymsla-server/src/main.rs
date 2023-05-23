@@ -1,4 +1,7 @@
-use geymsla_lib::store::Vault;
+use geymsla_lib::{
+    parser::{Message, OpCode},
+    store::Vault,
+};
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
     net::{TcpListener, TcpStream},
@@ -9,8 +12,8 @@ use std::sync::Arc;
 
 const DEFAULT_GEYMSLA_PORT: usize = 9876;
 
-async fn send_response(client: &mut TcpStream, code: &str, msg: &str) {
-    let response = format!("{}: {}\n", code, msg);
+async fn send_response(client: &mut TcpStream, code: OpCode, msg: &str) {
+    let response = format!("{}: {}\n", code.to_string(), msg);
     client
         .write_all(response.as_bytes())
         .await
@@ -31,38 +34,42 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<Vault>>) {
     let msg = String::from_utf8_lossy(&buffer[..n_bytes]);
     let msg = msg.trim_end();
 
-    // TODO: Split this into somewhere else
-    let msg_tokens = msg.split(' ').collect::<Vec<&str>>();
-    let op_code = msg_tokens[0];
-    let rest = &msg_tokens[1..];
+    let message = match Message::new(msg) {
+        Ok(m) => m,
+        Err(e) => {
+            eprintln!("unable to create message: {}", e);
+            return;
+        }
+    };
+
     let mut vault = store.lock().await;
-    match op_code {
-        "SSET" => {
-            let key = rest[0];
-            let value = rest[1];
+    match message.op {
+        OpCode::SSet => {
+            let key = &message.contents[0];
+            let value = &message.contents[1..].join(" ");
 
             if let Ok(_) = vault.insert_string(key, value) {
-                send_response(&mut client, op_code, "OK").await;
+                send_response(&mut client, message.op, "OK").await;
             }
         }
-        "SGET" => {
-            let key = rest[0];
+        OpCode::SGet => {
+            let key = &message.contents[0];
             if let Ok(value) = vault.get_string(key) {
-                send_response(&mut client, op_code, &value).await;
+                send_response(&mut client, message.op, &value).await;
             }
         }
-        _ => {
-            send_response(&mut client, op_code, "NOOP").await;
+        OpCode::Noop => {
+            send_response(&mut client, message.op, "invalid command").await;
         }
     }
 
-    println!("Current values: {:#?}", vault.strings);
+    dbg!(&vault.strings);
 }
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
     let store = Arc::new(Mutex::new(Vault::empty()));
-    let addr = format!("0.0.0.0:{}", DEFAULT_GEYMSLA_PORT);
+    let addr = format!("127.0.0.1:{}", DEFAULT_GEYMSLA_PORT);
     let listener = TcpListener::bind(&addr).await?;
 
     println!("Started Geymsla server");

@@ -13,14 +13,14 @@ impl Vault {
     }
 
     pub fn insert_string(&mut self, key: &str, value: &str) -> io::Result<String> {
-        println!("Inserting string: {key}");
+        dbg!(format!("Inserting key: {}", key));
         let _ = self.strings.insert(key.to_string(), value.to_string());
 
         Ok(value.to_string())
     }
 
     pub fn get_string(&self, key: &str) -> io::Result<String> {
-        println!("Retrieving value for {}", key);
+        dbg!(format!("Retrieving value for {}", key));
         if let Some(value) = self.strings.get(key) {
             return Ok(value.clone());
         }
