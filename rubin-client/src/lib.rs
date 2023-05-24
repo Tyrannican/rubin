@@ -5,11 +5,11 @@ use tokio::{
 
 use std::io::Result;
 
-pub struct GeymslaClient {
+pub struct RubinClient {
     pub address: String,
 }
 
-impl GeymslaClient {
+impl RubinClient {
     pub fn new(addr: &str, port: usize) -> Self {
         let address = format!("{}:{}", addr, port);
         Self { address }

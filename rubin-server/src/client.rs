@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use geymsla_lib::{
+use rubin_lib::{
     parser::{Message, OpCode},
     store::Vault,
 };

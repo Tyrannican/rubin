@@ -1,8 +1,8 @@
 [workspace]
 members = [
-    "geymsla-server",
-    "geymsla-client",
-    "geymsla-lib"
+    "rubin-server",
+    "rubin-client",
+    "rubin-lib"
 ]
 
 [profile.dev]
