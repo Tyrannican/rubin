@@ -1,19 +1,19 @@
 use std::collections::HashMap;
 use std::io;
+use std::path::PathBuf;
 
+#[derive(Default)]
 pub struct Vault {
+    pub path: PathBuf,
     pub strings: HashMap<String, String>,
 }
 
 impl Vault {
     pub fn empty() -> Self {
-        Self {
-            strings: HashMap::default(),
-        }
+        Self::default()
     }
 
     pub fn insert_string(&mut self, key: &str, value: &str) -> io::Result<String> {
-        dbg!(format!("Inserting key: {}", key));
         let _ = self.strings.insert(key.to_string(), value.to_string());
 
         Ok(value.to_string())
