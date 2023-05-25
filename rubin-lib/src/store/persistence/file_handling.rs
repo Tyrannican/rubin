@@ -3,7 +3,9 @@ use std::path::PathBuf;
 use tokio::fs;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use crate::store::Vault;
+use crate::store::MemStore;
+
+const STORAGE_FILE: &str = "rubinstore.json";
 
 pub async fn create_directory(location: &str) -> Result<PathBuf> {
     let path = PathBuf::from(location);
@@ -12,12 +14,13 @@ pub async fn create_directory(location: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-pub async fn load_store(path: PathBuf) -> Result<String> {
+pub async fn load_store(path: &PathBuf) -> Result<String> {
+    let fp = path.join(STORAGE_FILE);
     let mut file = fs::OpenOptions::new()
         .create(true)
         .read(true)
         .write(true)
-        .open(path)
+        .open(fp)
         .await?;
 
     let mut contents = String::new();
@@ -30,7 +33,8 @@ pub async fn load_store(path: PathBuf) -> Result<String> {
     Ok(contents)
 }
 
-pub async fn write_store(path: PathBuf, store: &Vault) -> Result<()> {
+pub async fn write_store(store: &MemStore) -> Result<()> {
+    let path = store.path.join(STORAGE_FILE);
     let raw = serde_json::to_string_pretty(&store)?;
     let mut file = fs::File::create(&path).await?;
     file.write_all(&raw.as_bytes()).await?;
