@@ -1,4 +1,4 @@
-# Geymsla
+# Rubin
 
 A test ground for trying out in-mempry data storage similar to Redis.
 Not a serious clone of Redis but just for fun.
