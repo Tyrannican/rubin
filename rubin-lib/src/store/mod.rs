@@ -4,13 +4,9 @@ use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 use std::io;
-use std::path::PathBuf;
 
 #[derive(Default, Serialize, Deserialize)]
 pub struct MemStore {
-    #[serde(skip)]
-    pub(crate) path: PathBuf,
-
     pub strings: HashMap<String, String>,
 }
 

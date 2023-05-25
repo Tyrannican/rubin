@@ -27,14 +27,14 @@ pub async fn load_store(path: &PathBuf) -> Result<String> {
     file.read_to_string(&mut contents).await?;
 
     if contents.is_empty() {
-        file.write_all(b"{}\n").await?;
+        file.write_all(b"").await?;
     }
 
     Ok(contents)
 }
 
-pub async fn write_store(store: &MemStore) -> Result<()> {
-    let path = store.path.join(STORAGE_FILE);
+pub async fn write_store(path: &PathBuf, store: &MemStore) -> Result<()> {
+    let path = path.join(STORAGE_FILE);
     let raw = serde_json::to_string_pretty(&store)?;
     let mut file = fs::File::create(&path).await?;
     file.write_all(&raw.as_bytes()).await?;
