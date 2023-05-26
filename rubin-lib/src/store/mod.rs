@@ -1,7 +1,5 @@
 pub mod persistence;
 
-use persistence::PersistentStore;
-
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
@@ -29,11 +27,5 @@ impl MemStore {
         }
 
         Ok("".to_string())
-    }
-
-    pub async fn to_persistent_store(self, storage_loc: &str) -> PersistentStore {
-        let mut ps = PersistentStore::new(storage_loc).await;
-        ps.store = self;
-        ps
     }
 }

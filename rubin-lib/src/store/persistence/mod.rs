@@ -23,10 +23,21 @@ impl PersistentStore {
         }
     }
 
-    pub async fn from_store(storage_loc: &str) -> Self {
+    pub async fn from_existing(storage_loc: &str) -> Self {
         let mut store = Self::new(storage_loc).await;
         store.load().await.expect("unable to load store");
         store
+    }
+
+    pub async fn from_store(storage_loc: &str, memstore: MemStore) -> Self {
+        let path = create_directory(storage_loc)
+            .await
+            .expect(&format!("unable to create directory: {}", storage_loc));
+
+        Self {
+            path,
+            store: memstore,
+        }
     }
 
     pub async fn insert_string(&mut self, key: &str, value: &str) -> io::Result<String> {
