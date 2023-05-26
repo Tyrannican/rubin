@@ -1,4 +1,4 @@
-use rubin_lib::store::persistence::PersistentStore;
+use rubin_lib::net::parser::{create_request, Operation};
 use std::io::Write;
 
 const DEBUG: bool = true;
@@ -21,8 +21,9 @@ async fn cleanup() -> std::io::Result<()> {
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let mut p = PersistentStore::new(PERSISTENT_STORE).await;
-    p.insert_string("user:1000", "testuser").await?;
+    let args = vec!["user:1000".to_string(), "graham".to_string()];
+    let req = create_request(Operation::StringSet, args);
+    println!("Request - {req}");
     cleanup().await?;
     Ok(())
 }
