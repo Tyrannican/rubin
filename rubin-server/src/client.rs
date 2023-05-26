@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use rubin_lib::{
-    parser::{Message, OpCode},
-    store::Vault,
+    net::parser::{parse_request, Operation},
+    store::MemStore,
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
@@ -10,7 +10,7 @@ use tokio::{
     sync::Mutex,
 };
 
-async fn send_response(client: &mut TcpStream, code: OpCode, msg: &str) {
+async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
     let response = format!("{}: {}\n", code.to_string(), msg);
     client
         .write_all(response.as_bytes())
@@ -33,36 +33,13 @@ async fn read_from_client(client: &mut TcpStream) -> String {
     msg.trim_end().to_string()
 }
 
-pub async fn handler(mut client: TcpStream, store: Arc<Mutex<Vault>>) {
+pub async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
     let msg = read_from_client(&mut client).await;
 
-    let message = match Message::new(msg.as_str()) {
-        Ok(m) => m,
-        Err(e) => {
-            eprintln!("unable to create message: {}", e);
-            return;
-        }
-    };
-
+    let message = parse_request(&msg);
     let mut vault = store.lock().await;
     match message.op {
-        OpCode::SSet => {
-            let key = &message.contents[0];
-            let value = &message.contents[1..].join(" ");
-
-            if let Ok(_) = vault.insert_string(key, value) {
-                send_response(&mut client, message.op, "OK").await;
-            }
-        }
-        OpCode::SGet => {
-            let key = &message.contents[0];
-            if let Ok(value) = vault.get_string(key) {
-                send_response(&mut client, message.op, &value).await;
-            }
-        }
-        OpCode::Noop => {
-            send_response(&mut client, message.op, "invalid command").await;
-        }
+        _ => {}
     }
 
     dbg!(&vault.strings);
