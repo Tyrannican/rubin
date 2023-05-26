@@ -1,8 +1,11 @@
+use crate::errors::MessageError;
+
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operation {
     StringSet,
     StringGet,
     Noop,
+    Error,
 }
 
 impl Operation {
@@ -20,6 +23,7 @@ impl std::fmt::Display for Operation {
         match self {
             Self::StringSet => write!(f, "SET"),
             Self::StringGet => write!(f, "GET"),
+            Self::Error => write!(f, "ERR"),
             Self::Noop => write!(f, "NOOP"),
         }
     }
@@ -30,11 +34,35 @@ pub struct Message {
     pub args: Vec<String>,
 }
 
+impl Message {
+    pub fn validate(&self) -> bool {
+        let mut valid = false;
+
+        match self.op {
+            // Should have TWO entries - ONE key and ONE value
+            Operation::StringSet => {
+                if self.args.len() == 2 {
+                    valid = true;
+                }
+            }
+            // Should have ONE entry - a key
+            Operation::StringGet => {
+                if self.args.len() == 1 {
+                    valid = true;
+                }
+            }
+            _ => {}
+        }
+
+        valid
+    }
+}
+
 pub fn create_request(op_code: Operation, args: Vec<String>) -> String {
     format!("{}::{}", op_code, args.join(" "))
 }
 
-pub fn parse_request(req: &str) -> Message {
+pub fn parse_request(req: &str) -> Result<Message, MessageError> {
     let r_split = req
         .split("::")
         .map(|s| s.to_string())
@@ -42,5 +70,11 @@ pub fn parse_request(req: &str) -> Message {
     let op = Operation::from_str(&r_split[0]);
     let args = r_split[1..].to_vec();
 
-    Message { op, args }
+    let msg = Message { op, args };
+
+    if !msg.validate() {
+        return Err(MessageError);
+    }
+
+    Ok(msg)
 }

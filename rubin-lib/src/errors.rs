@@ -1,8 +1,8 @@
 #[derive(Debug, Clone)]
-pub struct MessageLengthError;
+pub struct MessageError;
 
-impl std::fmt::Display for MessageLengthError {
+impl std::fmt::Display for MessageError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "invalid message length")
+        write!(f, "invalid message")
     }
 }
