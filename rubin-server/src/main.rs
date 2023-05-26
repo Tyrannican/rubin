@@ -1,7 +1,7 @@
-mod client;
+mod server;
 
-use client::handler;
-use rubin_lib::store::Vault;
+use rubin_lib::store::MemStore;
+use server::handler;
 use tokio::{net::TcpListener, sync::Mutex};
 
 use std::sync::Arc;
@@ -10,7 +10,7 @@ const DEFAULT_PORT: usize = 9876;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let store = Arc::new(Mutex::new(Vault::empty()));
+    let store = Arc::new(Mutex::new(MemStore::new()));
     let addr = format!("127.0.0.1:{}", DEFAULT_PORT);
     let listener = TcpListener::bind(&addr).await?;
 

@@ -11,7 +11,7 @@ use tokio::{
 };
 
 async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
-    let response = format!("{}: {}\n", code.to_string(), msg);
+    let response = format!("{}::{}\n", code.to_string(), msg);
     client
         .write_all(response.as_bytes())
         .await
@@ -36,10 +36,33 @@ async fn read_from_client(client: &mut TcpStream) -> String {
 pub async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
     let msg = read_from_client(&mut client).await;
 
-    let message = parse_request(&msg);
+    let message = match parse_request(&msg) {
+        Ok(msg) => msg,
+        Err(_) => {
+            send_response(&mut client, Operation::Error, "invalid message").await;
+            return;
+        }
+    };
+
     let mut vault = store.lock().await;
     match message.op {
-        _ => {}
+        Operation::StringSet => {
+            let key = &message.args[0];
+            let value = &message.args[1];
+
+            let _ = vault.insert_string(key, value);
+            send_response(&mut client, message.op, "OK").await;
+        }
+        Operation::StringGet => {
+            let key = &message.args[0];
+
+            if let Ok(value) = vault.get_string(key) {
+                send_response(&mut client, message.op, &value).await;
+            }
+        }
+        _ => {
+            send_response(&mut client, Operation::Noop, "nothing to do").await;
+        }
     }
 
     dbg!(&vault.strings);
