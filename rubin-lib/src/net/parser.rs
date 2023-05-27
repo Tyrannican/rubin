@@ -41,12 +41,14 @@ impl Message {
         match self.op {
             // Should have TWO entries - ONE key and ONE value
             Operation::StringSet => {
+                debug_assert!(self.args.len() == 2);
                 if self.args.len() == 2 {
                     valid = true;
                 }
             }
             // Should have ONE entry - a key
             Operation::StringGet => {
+                debug_assert!(self.args.len() == 1);
                 if self.args.len() == 1 {
                     valid = true;
                 }
@@ -67,8 +69,12 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
         .split("::")
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
+
     let op = Operation::from_str(&r_split[0]);
-    let args = r_split[1..].to_vec();
+    let args = r_split[1]
+        .split(' ')
+        .map(|s| s.to_string())
+        .collect::<Vec<String>>();
 
     let msg = Message { op, args };
 
