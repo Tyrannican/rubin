@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use rubin_lib::{
+use crate::{
     net::parser::{parse_request, Operation},
     store::MemStore,
 };
@@ -9,6 +9,8 @@ use tokio::{
     net::{TcpListener, TcpStream},
     sync::Mutex,
 };
+
+pub const DEFAULT_PORT: usize = 9867;
 
 async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
     let response = format!("{}::{}\n", code.to_string(), msg);
@@ -33,7 +35,7 @@ async fn read_from_client(client: &mut TcpStream) -> String {
     msg.trim_end().to_string()
 }
 
-pub async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
+async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
     let msg = read_from_client(&mut client).await;
 
     let message = match parse_request(&msg) {

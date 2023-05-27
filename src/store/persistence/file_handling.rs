@@ -14,10 +14,6 @@ pub async fn create_directory(location: &str) -> Result<PathBuf> {
     Ok(path)
 }
 
-pub async fn remove_directory(location: &str) -> Result<()> {
-    fs::remove_dir_all(location).await
-}
-
 pub async fn load_store(path: &PathBuf) -> Result<String> {
     let fp = path.join(STORAGE_FILE);
     let mut file = fs::OpenOptions::new()

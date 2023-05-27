@@ -3,7 +3,7 @@ use tokio::{
     net::TcpStream,
 };
 
-use rubin_lib::net::parser::{create_request, parse_response, Operation};
+use crate::net::parser::{create_request, parse_response, Operation};
 
 use std::io::Result;
 
