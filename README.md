@@ -1,7 +1,5 @@
 # Rubin
 
-A test ground for trying out in-mempry data storage similar to Redis.
-Not a serious clone of Redis but just for fun.
+In-memory datastore with option for persistence on disk.
 
-Might add this to `Safir` as an option if it works but will cross that bridge
-when I come to it
+It's like Redis but nowhere near as good :D
