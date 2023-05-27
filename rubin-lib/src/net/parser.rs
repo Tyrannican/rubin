@@ -84,3 +84,12 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
 
     Ok(msg)
 }
+
+pub fn parse_response(msg: &str) -> String {
+    let resp = msg.split("::").collect::<Vec<&str>>();
+    if resp.len() < 2 {
+        return String::from("");
+    }
+
+    return resp[1].to_string();
+}

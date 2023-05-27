@@ -3,6 +3,8 @@ use tokio::{
     net::TcpStream,
 };
 
+use rubin_lib::net::parser::{create_request, parse_response, Operation};
+
 use std::io::Result;
 
 pub struct RubinClient {
@@ -16,29 +18,23 @@ impl RubinClient {
     }
 
     pub async fn insert_string(&self, key: &str, value: &str) -> Result<String> {
-        let msg = format!("SSET {} {}", key, value);
+        let msg = create_request(
+            Operation::StringSet,
+            vec![key.to_string(), value.to_string()],
+        );
         self.request(&msg).await
     }
 
     pub async fn get_string(&self, key: &str) -> Result<String> {
-        let msg = format!("SGET {}", key);
+        let msg = create_request(Operation::StringGet, vec![key.to_string()]);
         self.request(&msg).await
     }
 
     async fn request(&self, msg: &str) -> Result<String> {
         let response = self.send(&msg).await?;
-        let contents = self.parse_response(&response);
+        let contents = parse_response(&response);
 
         Ok(contents)
-    }
-
-    fn parse_response(&self, resp: &str) -> String {
-        let resp_split = resp.split(": ").collect::<Vec<&str>>();
-        if resp_split.len() == 0 {
-            return String::from("");
-        }
-
-        resp_split[1].to_string()
     }
 
     async fn send(&self, msg: &str) -> Result<String> {

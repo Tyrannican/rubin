@@ -73,7 +73,7 @@ pub async fn start(addr: &str, port: usize) -> std::io::Result<()> {
     let addr = format!("{}:{}", addr, port);
     let listener = TcpListener::bind(&addr).await?;
 
-    println!("Started Rubin server");
+    dbg!("Started Rubin server");
     loop {
         let (client, _) = listener.accept().await?;
         let store = Arc::clone(&store);
