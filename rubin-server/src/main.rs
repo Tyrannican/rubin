@@ -1,29 +1,8 @@
-mod server;
-
-use rubin_lib::store::MemStore;
-use server::handler;
-use tokio::{net::TcpListener, sync::Mutex};
-
-use std::sync::Arc;
+use rubin_server::start;
 
 const DEFAULT_PORT: usize = 9876;
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let store = Arc::new(Mutex::new(MemStore::new()));
-    let addr = format!("127.0.0.1:{}", DEFAULT_PORT);
-    let listener = TcpListener::bind(&addr).await?;
-
-    println!("Started Rubin server");
-    loop {
-        let (client, _) = listener.accept().await?;
-        let store = Arc::clone(&store);
-
-        let client_addr = client.peer_addr()?;
-        println!("Accepted new client: {}", client_addr);
-
-        tokio::spawn(async move {
-            handler(client, store).await;
-        });
-    }
+    start("127.0.0.1", DEFAULT_PORT).await
 }

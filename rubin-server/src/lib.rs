@@ -6,7 +6,7 @@ use rubin_lib::{
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},
-    net::TcpStream,
+    net::{TcpListener, TcpStream},
     sync::Mutex,
 };
 
@@ -66,4 +66,23 @@ pub async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
     }
 
     dbg!(&vault.strings);
+}
+
+pub async fn start(addr: &str, port: usize) -> std::io::Result<()> {
+    let store = Arc::new(Mutex::new(MemStore::new()));
+    let addr = format!("{}:{}", addr, port);
+    let listener = TcpListener::bind(&addr).await?;
+
+    println!("Started Rubin server");
+    loop {
+        let (client, _) = listener.accept().await?;
+        let store = Arc::clone(&store);
+
+        let client_addr = client.peer_addr()?;
+        println!("Accepted new client: {}", client_addr);
+
+        tokio::spawn(async move {
+            handler(client, store).await;
+        });
+    }
 }
