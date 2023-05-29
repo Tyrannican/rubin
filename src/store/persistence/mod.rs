@@ -73,6 +73,7 @@ impl PersistentStore {
 #[cfg(test)]
 mod persistent_store {
     use super::*;
+
     use std::path::PathBuf;
     use tempdir::TempDir;
 
@@ -103,6 +104,44 @@ mod persistent_store {
         assert_eq!(result, "value1");
         assert_eq!(ps.store.strings.len(), 1);
         assert!(rubinstore.exists());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn load_existing_store() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let mut ps = PersistentStore::new(&td).await?;
+        ps.insert_string("key1", "value1").await?;
+
+        drop(ps);
+
+        let ps = PersistentStore::from_existing(td).await?;
+        assert_eq!(ps.store.strings.len(), 1);
+
+        let result = ps.get_string("key1")?;
+        assert_eq!(result, "value1");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn load_from_memstore() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let mut ms = MemStore::new();
+
+        for i in 0..10 {
+            let key = format!("key-{}", i);
+            let value = format!("value-{}", i);
+            let _ = ms.insert_string(&key, &value);
+        }
+
+        let mut ps = PersistentStore::from_store(&td, ms).await?;
+        assert_eq!(ps.store.strings.len(), 10);
+
+        let _ = ps.insert_string("key-11", "value-11").await?;
+        assert_eq!(ps.store.strings.len(), 11);
+        assert!(td.join("rubinstore.json").exists());
 
         Ok(())
     }

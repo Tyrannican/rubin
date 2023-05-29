@@ -57,6 +57,20 @@ mod memstore {
     }
 
     #[test]
+    fn add_loads_of_entries() -> io::Result<()> {
+        let mut ms = MemStore::new();
+
+        for i in 0..100_000 {
+            let key = format!("key-{}", i);
+            let value = format!("value-{}", i);
+            let result = ms.insert_string(&key, &value)?;
+            assert_eq!(result, value);
+        }
+
+        Ok(())
+    }
+
+    #[test]
     fn get_entries() -> io::Result<()> {
         let mut ms = MemStore::new();
         ms.insert_string("key1", "value1")?;
