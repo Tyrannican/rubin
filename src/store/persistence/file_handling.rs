@@ -1,5 +1,5 @@
 use std::io::Result;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
@@ -7,11 +7,10 @@ use crate::store::MemStore;
 
 const STORAGE_FILE: &str = "rubinstore.json";
 
-pub async fn create_directory(location: &str) -> Result<PathBuf> {
-    let path = PathBuf::from(location);
-    fs::create_dir_all(&path).await?;
+pub async fn create_directory<P: AsRef<Path>>(location: P) -> Result<PathBuf> {
+    fs::create_dir_all(&location).await?;
 
-    Ok(path)
+    Ok(location.as_ref().to_path_buf())
 }
 
 pub async fn load_store(path: &PathBuf) -> Result<String> {
