@@ -42,14 +42,12 @@ impl Message {
         match self.op {
             // Should have TWO entries - ONE key and ONE value
             Operation::StringSet => {
-                debug_assert!(self.args.len() == 2);
                 if self.args.len() == 2 {
                     valid = true;
                 }
             }
             // Should have ONE entry - a key
             Operation::StringGet => {
-                debug_assert!(self.args.len() == 1);
                 if self.args.len() == 1 {
                     valid = true;
                 }
@@ -97,7 +95,7 @@ pub fn parse_response(msg: &str) -> String {
         return String::from("");
     }
 
-    return resp[1].to_string();
+    return resp[1].trim().to_string();
 }
 
 #[cfg(test)]
