@@ -1,3 +1,22 @@
+//! An asynchronus in-memory store with on-disk persistence
+//!
+//! Functions as a wrapper around the [MemStore] struct with the option to write
+//! to disk when needed.
+//!
+//! TODO: Add examples with each type of creation method
+//!
+//! ## Examples
+//!
+//! ```no_run
+//! use rubin::store::persistence::PersistentStore;
+//!
+//! #[tokio::main]
+//! async fn main() -> std::io::Result<()> {
+//!     let mut ps = PersistentStore::new("some/storage/location").await?;
+//!     Ok(())
+//! }
+//!
+//! ```
 pub(crate) mod file_handling;
 
 use crate::store::persistence::file_handling::*;

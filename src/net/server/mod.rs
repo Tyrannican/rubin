@@ -49,7 +49,6 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
                 MessageError::InvalidFormat => {
                     send_response(&mut client, Operation::Error, "invalid request format").await
                 }
-                _ => send_response(&mut client, Operation::Error, "unknown error").await,
             }
             return;
         }
