@@ -67,11 +67,14 @@ pub fn create_request(op_code: Operation, args: Vec<String>) -> String {
 }
 
 pub fn parse_request(req: &str) -> Result<Message, MessageError> {
-    // FIXME: Bounds checking
     let r_split = req
         .split("::")
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
+
+    if r_split.len() < 2 {
+        return Err(MessageError::InvalidFormat);
+    }
 
     let op = Operation::from_str(&r_split[0]);
     let args = r_split[1]
@@ -82,7 +85,7 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
     let msg = Message { op, args };
 
     if !msg.validate() {
-        return Err(MessageError);
+        return Err(MessageError::InvalidMessage);
     }
 
     Ok(msg)
@@ -169,24 +172,43 @@ mod tests {
     #[test]
     fn parse_requests_correctly() {
         let request = "SET::arg1 arg2";
-        let result = parse_request(request);
+        let result = parse_request(request).unwrap();
 
-        match result {
-            Ok(message) => {
-                let expected = Message {
-                    op: Operation::StringSet,
-                    args: vec!["arg1".to_string(), "arg2".to_string()],
-                };
+        let expected = Message {
+            op: Operation::StringSet,
+            args: vec!["arg1".to_string(), "arg2".to_string()],
+        };
 
-                assert_eq!(message, expected);
-            }
-            Err(_) => {}
-        }
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn detects_an_invalid_message() {
+        let request = "SET::arg1";
+        let result = parse_request(request).unwrap_err();
+        assert_eq!(result, MessageError::InvalidMessage);
     }
 
     #[test]
     fn parse_invalid_requests() {
         let request = "SGET:argumetns blahg";
-        let result = parse_request(request);
+        let result = parse_request(request).unwrap_err();
+        assert_eq!(result, MessageError::InvalidFormat);
+    }
+
+    #[test]
+    fn parses_a_valid_response() {
+        let response = "SET::OK";
+        let result = parse_response(response);
+
+        assert_eq!(&result, "OK");
+    }
+
+    #[test]
+    fn parses_an_invalid_response_correctly() {
+        let response = "GET:";
+        let result = parse_response(response);
+
+        assert_eq!(&result, "");
     }
 }
