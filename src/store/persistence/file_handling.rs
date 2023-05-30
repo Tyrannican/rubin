@@ -13,7 +13,7 @@ pub async fn create_directory<P: AsRef<Path>>(location: P) -> Result<PathBuf> {
     Ok(location.as_ref().to_path_buf())
 }
 
-pub async fn load_store(path: &PathBuf) -> Result<String> {
+pub async fn load_store(path: &Path) -> Result<String> {
     let fp = path.join(STORAGE_FILE);
 
     let mut file = fs::OpenOptions::new()
@@ -33,11 +33,11 @@ pub async fn load_store(path: &PathBuf) -> Result<String> {
     Ok(contents)
 }
 
-pub async fn write_store(path: &PathBuf, store: &MemStore) -> Result<()> {
+pub async fn write_store(path: &Path, store: &MemStore) -> Result<()> {
     let path = path.join(STORAGE_FILE);
     let raw = serde_json::to_string_pretty(&store)?;
     let mut file = fs::File::create(&path).await?;
-    file.write_all(&raw.as_bytes()).await?;
+    file.write_all(raw.as_bytes()).await?;
 
     Ok(())
 }
