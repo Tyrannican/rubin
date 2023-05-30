@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
+    errors::MessageError,
     net::parser::{parse_request, Operation},
     store::MemStore,
 };
@@ -40,8 +41,16 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
 
     let message = match parse_request(&msg) {
         Ok(msg) => msg,
-        Err(_) => {
-            send_response(&mut client, Operation::Error, "invalid message").await;
+        Err(error) => {
+            match error {
+                MessageError::InvalidMessage => {
+                    send_response(&mut client, Operation::Error, "invalid message").await
+                }
+                MessageError::InvalidFormat => {
+                    send_response(&mut client, Operation::Error, "invalid request format").await
+                }
+                _ => send_response(&mut client, Operation::Error, "unknown error").await,
+            }
             return;
         }
     };
