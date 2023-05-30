@@ -1,5 +1,5 @@
 [package]
-name = "rubin-lib"
+name = "rubin"
 version = "0.1.0"
 edition = "2021"
 
@@ -10,3 +10,6 @@ net = []
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 tokio = { version = "1.28.1", features = ["full"] }
+
+[dev-dependencies]
+tempdir = "0.3"
