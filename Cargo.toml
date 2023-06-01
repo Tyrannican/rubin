@@ -6,6 +6,7 @@ authors = ["Graham Keenan graham.keenan@outlook.com"]
 license = "MIT OR APACHE-2.0"
 description = "In-memory key-value store with the option for persistence"
 readme = "README.md"
+documentation = "https://docs.rs/rubin"
 homepage = "https://github.com/Tyrannican/rubin"
 repository = "https://github.com/Tyrannican/rubin"
 keywords = ["in-memory", "persistence", "store", "cache"]
