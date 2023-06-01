@@ -16,6 +16,9 @@ pub enum Operation {
     /// Retreive a value from the string store
     StringGet,
 
+    /// Remove a value from the string store
+    StringRemove,
+
     /// No operation
     Noop,
 
@@ -29,6 +32,7 @@ impl Operation {
         match op {
             "SET" => Self::StringSet,
             "GET" => Self::StringGet,
+            "RM" => Self::StringRemove,
             _ => Self::Noop,
         }
     }
@@ -39,6 +43,7 @@ impl std::fmt::Display for Operation {
         match self {
             Self::StringSet => write!(f, "SET"),
             Self::StringGet => write!(f, "GET"),
+            Self::StringRemove => write!(f, "RM"),
             Self::Error => write!(f, "ERR"),
             Self::Noop => write!(f, "NOOP"),
         }
@@ -62,6 +67,7 @@ impl Message {
     ///
     /// * [`Operation::StringSet`] - Should have **TWO** arguments (**ONE** key and **ONE** value)
     /// * [`Operation::StringGet`] - Should have **ONE** argument (a key)
+    /// * [`Operation::StringRemove`] - Should have **ONE** argument (a key)
     /// * [`Operation::Noop`] - No validation required
     pub fn validate(&self) -> bool {
         let mut valid = false;
@@ -74,7 +80,7 @@ impl Message {
                 }
             }
             // Should have ONE entry - a key
-            Operation::StringGet => {
+            Operation::StringGet | Operation::StringRemove => {
                 if self.args.len() == 1 {
                     valid = true;
                 }
@@ -154,13 +160,14 @@ mod tests {
 
     #[test]
     fn create_appropriate_operation() {
-        let op_codes = vec!["SET", "GET", "SOMETHING"];
+        let op_codes = vec!["SET", "GET", "RM", "SOMETHING"];
         for op in op_codes {
             let code: Operation = Operation::from_str(op);
 
             match op {
                 "SET" => assert!(code == Operation::StringSet),
                 "GET" => assert!(code == Operation::StringGet),
+                "RM" => assert!(code == Operation::StringRemove),
                 _ => assert!(code == Operation::Noop),
             }
         }
@@ -193,6 +200,19 @@ mod tests {
     }
 
     #[test]
+    fn validate_string_remove_message() {
+        let mut m = Message {
+            op: Operation::StringRemove,
+            args: vec!["arg1".to_string()],
+        };
+
+        assert!(m.validate());
+
+        m.args.push("arg2".to_string());
+        assert!(!m.validate());
+    }
+
+    #[test]
     fn validation_noop_message() {
         let m = Message {
             op: Operation::Noop,
@@ -208,7 +228,7 @@ mod tests {
         for op in ops {
             let args = match op {
                 Operation::StringSet => vec!["arg1".to_string(), "arg2".to_string()],
-                Operation::StringGet => vec!["arg1".to_string()],
+                Operation::StringGet | Operation::StringRemove => vec!["arg1".to_string()],
                 _ => vec![],
             };
             let expected = format!("{}::{}", op, args.join(" "));
