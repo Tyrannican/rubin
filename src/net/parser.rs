@@ -1,14 +1,30 @@
+//! Parser for handling incoming / outgoing network requests to the client / server
+//!
+//! A collection of types and functions to handle the parsing of requests received
+//! from clients.
+//!
+//! Used to determine which operation to perform adn what response to send.
+
 use crate::errors::MessageError;
 
+/// Operation type denoting the type of Operation to perform
 #[derive(Debug, Clone, PartialEq)]
 pub enum Operation {
+    /// Add a key-value to the string store
     StringSet,
+
+    /// Retreive a value from the string store
     StringGet,
+
+    /// No operation
     Noop,
+
+    /// Parsing error
     Error,
 }
 
 impl Operation {
+    /// Converts an operation from a string to an [`Operation`]
     pub fn from_str(op: &str) -> Self {
         match op {
             "SET" => Self::StringSet,
@@ -29,13 +45,24 @@ impl std::fmt::Display for Operation {
     }
 }
 
+/// Representation of a message denoting the operation and arguments
 #[derive(Debug, Clone, PartialEq)]
 pub struct Message {
+    /// Operation to perform
     pub op: Operation,
+
+    /// Arguments to the operation
     pub args: Vec<String>,
 }
 
 impl Message {
+    /// Validates a message is correct with a case for each operation dependent on parameters
+    ///
+    /// # Validation Parameters
+    ///
+    /// * [`Operation::StringSet`] - Should have **TWO** arguments (**ONE** key and **ONE** value)
+    /// * [`Operation::StringGet`] - Should have **ONE** argument (a key)
+    /// * [`Operation::Noop`] - No validation required
     pub fn validate(&self) -> bool {
         let mut valid = false;
 
@@ -60,10 +87,19 @@ impl Message {
     }
 }
 
+/// Create a request string from an [`Operation`] and an array of [`String`]
 pub fn create_request(op_code: Operation, args: Vec<String>) -> String {
     format!("{}::{}", op_code, args.join(" "))
 }
 
+/// Parse a request, extracting out the [`Operation`] and arguments.
+///
+/// These are then used to construct a [`Message`]
+///
+/// # Errors
+///
+/// * [`MessageError::InvalidFormat`] - The format of the message is incorrect
+/// * [`MessageError::InvalidMessage`] - Message failed the validation checks
 pub fn parse_request(req: &str) -> Result<Message, MessageError> {
     let r_split = req
         .split("::")
@@ -89,6 +125,20 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
     Ok(msg)
 }
 
+/// Parse a string to extract out the response value
+///
+/// Trims the message based on the `::` delimiter
+///
+/// # Example
+///
+/// ```
+/// use rubin::net::parser::parse_response;
+///
+/// let msg = "SET::value";
+/// let response = parse_response(msg);
+///
+/// assert_eq!(&response, "value");
+/// ```
 pub fn parse_response(msg: &str) -> String {
     let resp = msg.split("::").collect::<Vec<&str>>();
     if resp.len() < 2 {

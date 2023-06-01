@@ -11,16 +11,14 @@
 //! ```
 //! use rubin::store::MemStore;
 //!
-//! fn main() {
-//!     let mut ms = MemStore::new();
+//! let mut ms = MemStore::new();
 //!
-//!     // Add a value to the store
-//!     ms.insert_string("key", "value");
+//! // Add a value to the store
+//! ms.insert_string("key", "value");
 //!
-//!     // Retrieve a value from the store
-//!     let result = ms.get_string("key").unwrap();
-//!     assert_eq!(&result, "value");
-//! }
+//! // Retrieve a value from the store
+//! let result = ms.get_string("key").unwrap();
+//! assert_eq!(&result, "value");
 //! ```
 
 pub mod persistence;
