@@ -2,6 +2,14 @@
 name = "rubin"
 version = "0.1.0"
 edition = "2021"
+authors = ["Graham Keenan graham.keenan@outlook.com"]
+license = "MIT OR APACHE-2.0"
+description = "In-memory key-value store with the option for persistence"
+readme = "README.md"
+homepage = "https://github.com/Tyrannican/rubin"
+repository = "https://github.com/Tyrannican/rubin"
+keywords = ["in-memory", "persistence", "store", "cache"]
+categories = ["caching", "database", "data-structures", "utilities"]
 
 [dependencies]
 serde = { version = "1.0.163", features = ["derive"] }
