@@ -125,6 +125,27 @@ impl RubinClient {
         self.request(&msg).await
     }
 
+    /// Sends a request to the server to clear all keys and values from the string store
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::net::client::RubinClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let client = RubinClient::new("127.0.0.1", 9876);
+    ///     let result = client.clear_strings().await?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn clear_strings(&self) -> Result<String> {
+        let msg = create_request(Operation::StringClear, vec!["noop".to_string()]);
+
+        self.request(&msg).await
+    }
+
     /// Sends a request to server and parses the response
     async fn request(&self, msg: &str) -> Result<String> {
         let response = self.send(&msg).await?;

@@ -19,6 +19,9 @@ pub enum Operation {
     /// Remove a value from the string store
     StringRemove,
 
+    /// Clear all keys and values from a string store
+    StringClear,
+
     /// No operation
     Noop,
 
@@ -32,6 +35,7 @@ impl Operation {
         match op {
             "SET" => Self::StringSet,
             "GET" => Self::StringGet,
+            "CLR" => Self::StringClear,
             "RM" => Self::StringRemove,
             _ => Self::Noop,
         }
@@ -44,6 +48,7 @@ impl std::fmt::Display for Operation {
             Self::StringSet => write!(f, "SET"),
             Self::StringGet => write!(f, "GET"),
             Self::StringRemove => write!(f, "RM"),
+            Self::StringClear => write!(f, "CLR"),
             Self::Error => write!(f, "ERR"),
             Self::Noop => write!(f, "NOOP"),
         }
@@ -68,6 +73,7 @@ impl Message {
     /// * [`Operation::StringSet`] - Should have **TWO** arguments (**ONE** key and **ONE** value)
     /// * [`Operation::StringGet`] - Should have **ONE** argument (a key)
     /// * [`Operation::StringRemove`] - Should have **ONE** argument (a key)
+    /// * [`Operation::StringClear`] - No validation required
     /// * [`Operation::Noop`] - No validation required
     pub fn validate(&self) -> bool {
         let mut valid = false;
@@ -85,7 +91,7 @@ impl Message {
                     valid = true;
                 }
             }
-            Operation::Noop => valid = true,
+            Operation::StringClear | Operation::Noop => valid = true,
             _ => {}
         }
 
@@ -160,7 +166,7 @@ mod tests {
 
     #[test]
     fn create_appropriate_operation() {
-        let op_codes = vec!["SET", "GET", "RM", "SOMETHING"];
+        let op_codes = vec!["SET", "GET", "RM", "CLR", "SOMETHING"];
         for op in op_codes {
             let code: Operation = Operation::from_str(op);
 
@@ -168,6 +174,7 @@ mod tests {
                 "SET" => assert!(code == Operation::StringSet),
                 "GET" => assert!(code == Operation::StringGet),
                 "RM" => assert!(code == Operation::StringRemove),
+                "CLR" => assert!(code == Operation::StringClear),
                 _ => assert!(code == Operation::Noop),
             }
         }
@@ -210,6 +217,16 @@ mod tests {
 
         m.args.push("arg2".to_string());
         assert!(!m.validate());
+    }
+
+    #[test]
+    fn validation_string_clear() {
+        let m = Message {
+            op: Operation::StringClear,
+            args: vec![],
+        };
+
+        assert!(m.validate());
     }
 
     #[test]

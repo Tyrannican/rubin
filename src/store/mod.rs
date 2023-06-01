@@ -130,6 +130,30 @@ impl MemStore {
 
         Ok("".to_string())
     }
+
+    /// Clears all entries out of the string store
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rubin::store::MemStore;
+    ///
+    /// let mut ms = MemStore::new();
+    ///
+    /// for i in 0..100 {
+    ///     let key = format!("key-{}", i);
+    ///     ms.insert_string(&key, "value");
+    /// }
+    ///
+    /// ms.clear_strings();
+    ///
+    /// assert_eq!(ms.strings.len(), 0);
+    /// ```
+    pub fn clear_strings(&mut self) -> io::Result<()> {
+        self.strings.clear();
+
+        Ok(())
+    }
 }
 
 #[cfg(test)]

@@ -82,6 +82,18 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
                 send_response(&mut client, message.op, &value).await;
             }
         }
+        Operation::StringRemove => {
+            let key = &message.args[0];
+
+            if let Ok(value) = vault.remove_string(key) {
+                send_response(&mut client, message.op, &value).await;
+            }
+        }
+        Operation::StringClear => {
+            if let Ok(_) = vault.clear_strings() {
+                send_response(&mut client, message.op, "OK").await;
+            }
+        }
         _ => {
             send_response(&mut client, Operation::Noop, "nothing to do").await;
         }

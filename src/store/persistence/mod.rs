@@ -249,6 +249,39 @@ impl PersistentStore {
         Ok(result)
     }
 
+    /// Clears all strings from the string store
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///
+    ///     for i in 0..100 {
+    ///         let key = format!("key-{}", i);
+    ///         ps.insert_string(&key, "value").await?;
+    ///     }
+    ///
+    ///     ps.clear_strings().await?;
+    ///
+    ///     assert_eq!(ps.store.strings.len(), 0);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn clear_strings(&mut self) -> io::Result<()> {
+        self.store.clear_strings()?;
+
+        if self.write_on_update {
+            self.write().await?;
+        }
+
+        Ok(())
+    }
+
     /// Sets the store to perform a write after each update
     ///
     /// This should be set for cases where updates are infrequent as frequent writes
