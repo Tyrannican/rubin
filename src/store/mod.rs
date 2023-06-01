@@ -99,6 +99,37 @@ impl MemStore {
 
         Ok("".to_string())
     }
+
+    /// Remove a value from the string store
+    ///
+    /// # Arguments
+    ///
+    /// * `key`: Key to remove
+    ///
+    /// # Returns
+    ///
+    /// * value: Value that was removed from the store, empty string if not present
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rubin::store::MemStore;
+    ///
+    /// let mut ms = MemStore::new();
+    ///
+    /// ms.insert_string("user:1000", "value");
+    ///
+    /// let value = ms.remove_string("user:1000").unwrap();
+    ///
+    /// assert_eq!(&value, "value");
+    /// ```
+    pub fn remove_string(&mut self, key: &str) -> io::Result<String> {
+        if let Some(value) = self.strings.remove(key) {
+            return Ok(value);
+        }
+
+        Ok("".to_string())
+    }
 }
 
 #[cfg(test)]

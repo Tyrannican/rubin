@@ -219,6 +219,36 @@ impl PersistentStore {
         self.store.get_string(key)
     }
 
+    /// Remove a value from the string store denoted by its key
+    ///
+    /// If no key is present, will return an empty string
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///
+    ///     ps.insert_string("user:1000", "value").await?;
+    ///
+    ///     let value = ps.remove_string("user:1000").await?;
+    ///
+    ///     assert_eq!(&value, "value");
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn remove_string(&mut self, key: &str) -> io::Result<String> {
+        let result = self.store.remove_string(key)?;
+
+        if self.write_on_update {
+            self.write().await?;
+        }
+
+        Ok(result)
+    }
+
     /// Sets the store to perform a write after each update
     ///
     /// This should be set for cases where updates are infrequent as frequent writes
