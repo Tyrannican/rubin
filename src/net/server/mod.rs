@@ -1,3 +1,11 @@
+//! Server protocol for operating a store on a network
+//!
+//! Creates a [`MemStore`] which operates over a network, accepting requests from clients
+//! to interact with the store.
+//!
+//! Can be run as an asynchronus task or as a background process, usage depends on end-user wants
+//! and needs.
+
 use std::sync::Arc;
 
 use crate::{
@@ -11,8 +19,7 @@ use tokio::{
     sync::Mutex,
 };
 
-pub const DEFAULT_PORT: usize = 9867;
-
+/// Sends a formatted response to the client prefixed with the [`Operation`] tag
 async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
     let response = format!("{}::{}\n", code.to_string(), msg);
     client
@@ -21,6 +28,7 @@ async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
         .expect("unable to response to client");
 }
 
+/// Reads a message from a client and converts it to a string
 async fn read_from_client(client: &mut TcpStream) -> String {
     let mut buffer = vec![0; 4096];
     let n_bytes = client
@@ -36,6 +44,10 @@ async fn read_from_client(client: &mut TcpStream) -> String {
     msg.trim_end().to_string()
 }
 
+/// Main handler for the server
+///
+/// Processes incoming requests from the client and performs the requested operation.
+/// If the operation cannot be processed, an error is returned.
 async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
     let msg = read_from_client(&mut client).await;
 
@@ -49,7 +61,6 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
                 MessageError::InvalidFormat => {
                     send_response(&mut client, Operation::Error, "invalid request format").await
                 }
-                _ => send_response(&mut client, Operation::Error, "unknown error").await,
             }
             return;
         }
@@ -79,6 +90,30 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
     dbg!(&vault.strings);
 }
 
+/// Starts the server to accept clients
+///
+/// This can be run as an independent task or as part of separate binary.
+///
+/// The usage really depends on what the end-user wants so this offers a simple
+/// function to start the server.
+///
+/// An example could be that this function could be started as a Daemon using a
+/// crate (e.g. [Daemonize](https://crates.io/crates/daemonize))
+///
+/// # Usage
+///
+/// ```no_run
+/// use rubin::net::server::start;
+///
+/// #[tokio::main]
+/// async fn main() -> std::io::Result<()> {
+///     tokio::task::spawn(start("127.0.0.1", 9876));
+///
+///     // Rest of the workload
+///
+///     Ok(())
+/// }
+/// ```
 pub async fn start(addr: &str, port: usize) -> std::io::Result<()> {
     let store = Arc::new(Mutex::new(MemStore::new()));
     let addr = format!("{}:{}", addr, port);
