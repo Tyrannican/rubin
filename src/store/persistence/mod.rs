@@ -79,6 +79,9 @@ pub struct PersistentStore {
     /// Directory which holds the store
     pub path: PathBuf,
 
+    /// Name of the store file
+    pub filename: PathBuf,
+
     /// In-memory store
     pub store: MemStore,
 
@@ -100,23 +103,32 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let ps = PersistentStore::new("some/storage/location").await?;
+    ///     let ps = PersistentStore::new("some/storage/file.json").await?;
     ///     Ok(())
     /// }
     /// ```
     pub async fn new<P: AsRef<Path>>(storage_loc: P) -> io::Result<Self> {
-        let path = create_directory(storage_loc).await?;
+        let folder = storage_loc
+            .as_ref()
+            .parent()
+            .expect("unable to get parent directory");
+
+        let filename = storage_loc
+            .as_ref()
+            .file_name()
+            .expect("unable to get filename");
+
+        let path = create_directory(folder).await?;
 
         Ok(Self {
             path,
+            filename: filename.into(),
             store: MemStore::new(),
             write_on_update: false,
         })
     }
 
     /// Create a Persistent Store from an already existing store file.
-    ///
-    /// Will look in the given directory for a `rubinstore.json` file and load it from disk.
     ///
     /// This will deserialize the JSON into the inner [`MemStore`] type.
     ///
@@ -125,7 +137,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let ps = PersistentStore::from_existing("already/existing/store/directory").await?;
+    ///     let ps = PersistentStore::from_existing("already/existing/store/file.json").await?;
     ///
     ///     Ok(())
     /// }
@@ -149,7 +161,7 @@ impl PersistentStore {
     ///     let mut ms = MemStore::new();
     ///     ms.insert_string("user:1000", "value")?;
     ///
-    ///     let ps = PersistentStore::from_store("some/storage/location", ms).await?;
+    ///     let ps = PersistentStore::from_store("some/storage/file.json", ms).await?;
     ///
     ///     Ok(())
     /// }
@@ -158,13 +170,10 @@ impl PersistentStore {
         storage_loc: P,
         memstore: MemStore,
     ) -> io::Result<Self> {
-        let path = create_directory(storage_loc).await?;
+        let mut persistent_store = Self::new(storage_loc).await?;
+        persistent_store.store = memstore;
 
-        Ok(Self {
-            path,
-            store: memstore,
-            write_on_update: false,
-        })
+        Ok(persistent_store)
     }
 
     /// Insert a key-value pair into the string store
@@ -179,7 +188,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///     ps.insert_string("user:1000", "value").await?;
     ///
     ///     Ok(())
@@ -204,7 +213,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///     ps.insert_string("user:1000", "value").await?;
     ///
     ///     // ...
@@ -219,6 +228,97 @@ impl PersistentStore {
         self.store.get_string(key)
     }
 
+    /// Remove a value from the string store denoted by its key
+    ///
+    /// If no key is present, will return an empty string
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
+    ///
+    ///     ps.insert_string("user:1000", "value").await?;
+    ///
+    ///     let value = ps.remove_string("user:1000").await?;
+    ///
+    ///     assert_eq!(&value, "value");
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn remove_string(&mut self, key: &str) -> io::Result<String> {
+        let result = self.store.remove_string(key)?;
+
+        if self.write_on_update {
+            self.write().await?;
+        }
+
+        Ok(result)
+    }
+
+    /// Clears all strings from the string store
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
+    ///
+    ///     for i in 0..100 {
+    ///         let key = format!("key-{}", i);
+    ///         ps.insert_string(&key, "value").await?;
+    ///     }
+    ///
+    ///     ps.clear_strings().await?;
+    ///
+    ///     assert_eq!(ps.store.strings.len(), 0);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn clear_strings(&mut self) -> io::Result<()> {
+        self.store.clear_strings()?;
+
+        if self.write_on_update {
+            self.write().await?;
+        }
+
+        Ok(())
+    }
+
+    /// Gets a reference to the inner string store.
+    ///
+    /// Used to get access to the inner type for more complicated operations the API doesnt
+    /// provide.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
+    ///
+    ///     // ...
+    ///
+    ///     let strings = ps.get_string_store_ref();
+    ///     for (key, value) in strings.iter() {
+    ///         // Process key and value
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn get_string_store_ref(&self) -> &std::collections::HashMap<String, String> {
+        self.store.get_string_store_ref()
+    }
+
     /// Sets the store to perform a write after each update
     ///
     /// This should be set for cases where updates are infrequent as frequent writes
@@ -229,7 +329,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///     ps.set_write_on_update(true);
     ///
     ///     // The store will now write to disk on each update
@@ -244,10 +344,11 @@ impl PersistentStore {
 
     /// Loads the store file from disk
     ///
-    /// Parses the contents of the `rubinstore.json` file and deserializes it into
+    /// Parses the contents of the store file and deserializes it into
     /// a [`MemStore`]
     async fn load(&mut self) -> io::Result<()> {
-        let contents = load_store(&self.path).await?;
+        let path = self.path.join(&self.filename);
+        let contents = load_store(&path).await?;
         if contents.is_empty() {
             return Ok(());
         }
@@ -262,7 +363,7 @@ impl PersistentStore {
     /// Writes the contents of the store out to disk
     ///
     /// This can be used to manually write the contents of the store out to disk
-    /// when `set_write_on_update` is disabled.o
+    /// when `set_write_on_update` is disabled.
     ///
     /// This best suited for frequent updates when snapshotting each time is expensive.
     ///
@@ -286,7 +387,8 @@ impl PersistentStore {
     /// }
     /// ```
     pub async fn write(&self) -> io::Result<()> {
-        write_store(&self.path, &self.store).await?;
+        let path = self.path.join(&self.filename);
+        write_store(&path, &self.store).await?;
 
         Ok(())
     }
@@ -307,10 +409,13 @@ mod persistent_store {
     #[tokio::test]
     async fn empty_store() -> io::Result<()> {
         let td = create_test_directory()?;
-        let ps = PersistentStore::new(&td).await?;
+        let path = td.join("rubinstore.json");
+        let ps = PersistentStore::new(&path).await?;
 
         assert_eq!(ps.store.strings.len(), 0);
         assert_eq!(ps.path, td);
+        assert_eq!(ps.filename, PathBuf::from("rubinstore.json"));
+        assert!(ps.path.exists());
 
         Ok(())
     }
@@ -319,7 +424,7 @@ mod persistent_store {
     async fn write_out_store() -> io::Result<()> {
         let td = create_test_directory()?;
         let rubinstore = td.join("rubinstore.json");
-        let ps = PersistentStore::new(&td).await?;
+        let ps = PersistentStore::new(&rubinstore).await?;
 
         ps.write().await?;
         assert!(rubinstore.exists());
@@ -332,7 +437,7 @@ mod persistent_store {
         let td = create_test_directory()?;
         let rubinstore = td.join("rubinstore.json");
 
-        let mut ps = PersistentStore::new(&td).await?;
+        let mut ps = PersistentStore::new(&rubinstore).await?;
         assert!(!ps.write_on_update);
 
         ps.insert_string("key1", "value1").await?;
@@ -351,7 +456,7 @@ mod persistent_store {
         let td = create_test_directory()?;
         let rubinstore = td.join("rubinstore.json");
 
-        let mut ps = PersistentStore::new(&td).await?;
+        let mut ps = PersistentStore::new(&rubinstore).await?;
         let result = ps.insert_string("key1", "value1").await?;
 
         assert_eq!(result, "value1");
@@ -367,7 +472,7 @@ mod persistent_store {
     async fn add_a_load_of_strings() -> io::Result<()> {
         let td = create_test_directory()?;
         let rubinstore = td.join("rubinstore.json");
-        let mut ps = PersistentStore::new(&td).await?;
+        let mut ps = PersistentStore::new(&rubinstore).await?;
 
         for i in 0..100_000 {
             let key = format!("key-{}", i);
@@ -385,13 +490,14 @@ mod persistent_store {
     #[tokio::test]
     async fn load_existing_store() -> io::Result<()> {
         let td = create_test_directory()?;
-        let mut ps = PersistentStore::new(&td).await?;
+        let path = td.join("rubinstore.json");
+        let mut ps = PersistentStore::new(&path).await?;
         ps.set_write_on_update(true);
         ps.insert_string("key1", "value1").await?;
 
         drop(ps);
 
-        let ps = PersistentStore::from_existing(td).await?;
+        let ps = PersistentStore::from_existing(path).await?;
         assert_eq!(ps.store.strings.len(), 1);
 
         let result = ps.get_string("key1")?;
@@ -412,7 +518,7 @@ mod persistent_store {
             let _ = ms.insert_string(&key, &value);
         }
 
-        let mut ps = PersistentStore::from_store(&td, ms).await?;
+        let mut ps = PersistentStore::from_store(&rubinstore, ms).await?;
         ps.set_write_on_update(true);
         assert_eq!(ps.store.strings.len(), 10);
 
@@ -420,6 +526,18 @@ mod persistent_store {
         assert_eq!(ps.store.strings.len(), 11);
 
         assert!(rubinstore.exists());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_ref_to_inner_stores() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let path = td.join("rubinstore.json");
+        let ps = PersistentStore::new(&path).await?;
+
+        let strings = ps.get_string_store_ref();
+        assert!(*strings == ps.store.strings);
 
         Ok(())
     }

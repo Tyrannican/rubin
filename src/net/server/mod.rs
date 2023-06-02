@@ -21,7 +21,7 @@ use tokio::{
 
 /// Sends a formatted response to the client prefixed with the [`Operation`] tag
 async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
-    let response = format!("{}::{}\n", code.to_string(), msg);
+    let response = format!("{}::{}\n", code, msg);
     client
         .write_all(response.as_bytes())
         .await
@@ -82,12 +82,22 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
                 send_response(&mut client, message.op, &value).await;
             }
         }
+        Operation::StringRemove => {
+            let key = &message.args[0];
+
+            if let Ok(value) = vault.remove_string(key) {
+                send_response(&mut client, message.op, &value).await;
+            }
+        }
+        Operation::StringClear => {
+            if vault.clear_strings().is_ok() {
+                send_response(&mut client, message.op, "OK").await;
+            }
+        }
         _ => {
             send_response(&mut client, Operation::Noop, "nothing to do").await;
         }
     }
-
-    dbg!(&vault.strings);
 }
 
 /// Starts the server to accept clients
@@ -119,7 +129,7 @@ pub async fn start(addr: &str, port: usize) -> std::io::Result<()> {
     let addr = format!("{}:{}", addr, port);
     let listener = TcpListener::bind(&addr).await?;
 
-    dbg!("Started Rubin server");
+    println!("Started Rubin server at {}", addr);
     loop {
         let (client, _) = listener.accept().await?;
         let store = Arc::clone(&store);

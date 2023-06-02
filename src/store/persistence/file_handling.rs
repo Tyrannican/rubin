@@ -1,3 +1,7 @@
+//! File-handling operations used by the [`PersistentStore`]
+//!
+//! Just a collection of File I/O helpers, nothing more, nothing less
+
 use std::io::Result;
 use std::path::{Path, PathBuf};
 use tokio::fs;
@@ -5,22 +9,23 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::store::MemStore;
 
-const STORAGE_FILE: &str = "rubinstore.json";
-
+/// Creates a directory at the given location
 pub async fn create_directory<P: AsRef<Path>>(location: P) -> Result<PathBuf> {
     fs::create_dir_all(&location).await?;
 
     Ok(location.as_ref().to_path_buf())
 }
 
+/// Loads a store file from disk.
+///
+/// Will read the contents of the file and return it as a String
+/// If nothing is in the file, it will write an empty string to the file
 pub async fn load_store(path: &Path) -> Result<String> {
-    let fp = path.join(STORAGE_FILE);
-
     let mut file = fs::OpenOptions::new()
         .create(true)
         .read(true)
         .write(true)
-        .open(fp)
+        .open(path)
         .await?;
 
     let mut contents = String::new();
@@ -33,8 +38,8 @@ pub async fn load_store(path: &Path) -> Result<String> {
     Ok(contents)
 }
 
+/// Serializes a [`MemStore`] and saves it out to disk
 pub async fn write_store(path: &Path, store: &MemStore) -> Result<()> {
-    let path = path.join(STORAGE_FILE);
     let raw = serde_json::to_string_pretty(&store)?;
     let mut file = fs::File::create(&path).await?;
     file.write_all(raw.as_bytes()).await?;
@@ -49,6 +54,8 @@ mod fh_tests {
     use std::io;
     use std::path::PathBuf;
     use tempdir::TempDir;
+
+    const STORAGE_FILE: &str = "rubinstore.json";
 
     fn create_test_directory() -> io::Result<PathBuf> {
         let td = TempDir::new("teststore")?;
@@ -73,7 +80,7 @@ mod fh_tests {
         let rubinstore = td.join(STORAGE_FILE);
         create_directory(&td).await?;
 
-        let result = load_store(&td).await?;
+        let result = load_store(&rubinstore).await?;
         assert!(result.len() == 0);
         assert!(rubinstore.exists());
         Ok(())
@@ -88,7 +95,7 @@ mod fh_tests {
         let mut f = tokio::fs::File::create(&rubinstore).await?;
         f.write_all(b"some_content").await?;
 
-        let result = load_store(&td).await?;
+        let result = load_store(&rubinstore).await?;
         assert!(result.len() != 0);
         assert_eq!(result, "some_content");
 
@@ -104,7 +111,7 @@ mod fh_tests {
         let mut ms = MemStore::new();
         ms.insert_string("key1", "value1")?;
 
-        write_store(&td, &ms).await?;
+        write_store(&rubinstore, &ms).await?;
 
         assert!(rubinstore.exists());
 
@@ -120,11 +127,11 @@ mod fh_tests {
         let mut ms = MemStore::new();
         ms.insert_string("key1", "value1")?;
 
-        write_store(&td, &ms).await?;
+        write_store(&rubinstore, &ms).await?;
 
         assert!(rubinstore.exists());
 
-        let contents = load_store(&td).await?;
+        let contents = load_store(&rubinstore).await?;
         let hs: HashMap<String, HashMap<String, String>> = serde_json::from_str(&contents)?;
         let strings = hs.get("strings").unwrap();
         assert!(*strings == ms.strings);
