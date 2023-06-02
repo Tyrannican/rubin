@@ -103,7 +103,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let ps = PersistentStore::new("some/storage/location").await?;
+    ///     let ps = PersistentStore::new("some/storage/file.json").await?;
     ///     Ok(())
     /// }
     /// ```
@@ -130,8 +130,6 @@ impl PersistentStore {
 
     /// Create a Persistent Store from an already existing store file.
     ///
-    /// Will look in the given directory for a `rubinstore.json` file and load it from disk.
-    ///
     /// This will deserialize the JSON into the inner [`MemStore`] type.
     ///
     /// ```no_run
@@ -139,7 +137,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let ps = PersistentStore::from_existing("already/existing/store/directory").await?;
+    ///     let ps = PersistentStore::from_existing("already/existing/store/file.json").await?;
     ///
     ///     Ok(())
     /// }
@@ -163,7 +161,7 @@ impl PersistentStore {
     ///     let mut ms = MemStore::new();
     ///     ms.insert_string("user:1000", "value")?;
     ///
-    ///     let ps = PersistentStore::from_store("some/storage/location", ms).await?;
+    ///     let ps = PersistentStore::from_store("some/storage/file.json", ms).await?;
     ///
     ///     Ok(())
     /// }
@@ -190,7 +188,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///     ps.insert_string("user:1000", "value").await?;
     ///
     ///     Ok(())
@@ -215,7 +213,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///     ps.insert_string("user:1000", "value").await?;
     ///
     ///     // ...
@@ -239,7 +237,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///
     ///     ps.insert_string("user:1000", "value").await?;
     ///
@@ -269,7 +267,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///
     ///     for i in 0..100 {
     ///         let key = format!("key-{}", i);
@@ -305,7 +303,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///
     ///     // ...
     ///
@@ -331,7 +329,7 @@ impl PersistentStore {
     ///
     /// #[tokio::main]
     /// async fn main() -> std::io::Result<()> {
-    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
     ///     ps.set_write_on_update(true);
     ///
     ///     // The store will now write to disk on each update
@@ -346,7 +344,7 @@ impl PersistentStore {
 
     /// Loads the store file from disk
     ///
-    /// Parses the contents of the `rubinstore.json` file and deserializes it into
+    /// Parses the contents of the store file and deserializes it into
     /// a [`MemStore`]
     async fn load(&mut self) -> io::Result<()> {
         let path = self.path.join(&self.filename);
@@ -365,7 +363,7 @@ impl PersistentStore {
     /// Writes the contents of the store out to disk
     ///
     /// This can be used to manually write the contents of the store out to disk
-    /// when `set_write_on_update` is disabled.o
+    /// when `set_write_on_update` is disabled.
     ///
     /// This best suited for frequent updates when snapshotting each time is expensive.
     ///

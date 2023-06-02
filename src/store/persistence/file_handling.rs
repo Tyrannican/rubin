@@ -1,3 +1,7 @@
+//! File-handling operations used by the [`PersistentStore`]
+//!
+//! Just a collection of File I/O helpers, nothing more, nothing less
+
 use std::io::Result;
 use std::path::{Path, PathBuf};
 use tokio::fs;
@@ -5,12 +9,17 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
 use crate::store::MemStore;
 
+/// Creates a directory at the given location
 pub async fn create_directory<P: AsRef<Path>>(location: P) -> Result<PathBuf> {
     fs::create_dir_all(&location).await?;
 
     Ok(location.as_ref().to_path_buf())
 }
 
+/// Loads a store file from disk.
+///
+/// Will read the contents of the file and return it as a String
+/// If nothing is in the file, it will write an empty string to the file
 pub async fn load_store(path: &Path) -> Result<String> {
     let mut file = fs::OpenOptions::new()
         .create(true)
@@ -29,6 +38,7 @@ pub async fn load_store(path: &Path) -> Result<String> {
     Ok(contents)
 }
 
+/// Serializes a [`MemStore`] and saves it out to disk
 pub async fn write_store(path: &Path, store: &MemStore) -> Result<()> {
     let raw = serde_json::to_string_pretty(&store)?;
     let mut file = fs::File::create(&path).await?;
