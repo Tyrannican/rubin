@@ -282,6 +282,34 @@ impl PersistentStore {
         Ok(())
     }
 
+    /// Gets a reference to the inner string store.
+    ///
+    /// Used to get access to the inner type for more complicated operations the API doesnt
+    /// provide.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage").await?;
+    ///
+    ///     // ...
+    ///
+    ///     let strings = ps.get_string_store_ref();
+    ///     for (key, value) in strings.iter() {
+    ///         // Process key and value
+    ///     }
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub fn get_string_store_ref(&self) -> &std::collections::HashMap<String, String> {
+        self.store.get_string_store_ref()
+    }
+
     /// Sets the store to perform a write after each update
     ///
     /// This should be set for cases where updates are infrequent as frequent writes
@@ -483,6 +511,17 @@ mod persistent_store {
         assert_eq!(ps.store.strings.len(), 11);
 
         assert!(rubinstore.exists());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn get_ref_to_inner_stores() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let ps = PersistentStore::new(&td).await?;
+
+        let strings = ps.get_string_store_ref();
+        assert!(*strings == ps.store.strings);
 
         Ok(())
     }
