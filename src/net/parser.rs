@@ -31,7 +31,7 @@ pub enum Operation {
 
 impl Operation {
     /// Converts an operation from a string to an [`Operation`]
-    pub fn from_str(op: &str) -> Self {
+    pub fn from_string(op: &str) -> Self {
         match op {
             "SET" => Self::StringSet,
             "GET" => Self::StringGet,
@@ -122,7 +122,7 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
         return Err(MessageError::InvalidFormat);
     }
 
-    let op = Operation::from_str(&r_split[0]);
+    let op = Operation::from_string(&r_split[0]);
     let args = r_split[1]
         .split(' ')
         .map(|s| s.to_string())
@@ -168,7 +168,7 @@ mod tests {
     fn create_appropriate_operation() {
         let op_codes = vec!["SET", "GET", "RM", "CLR", "SOMETHING"];
         for op in op_codes {
-            let code: Operation = Operation::from_str(op);
+            let code: Operation = Operation::from_string(op);
 
             match op {
                 "SET" => assert!(code == Operation::StringSet),

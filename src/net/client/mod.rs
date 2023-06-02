@@ -148,7 +148,7 @@ impl RubinClient {
 
     /// Sends a request to server and parses the response
     async fn request(&self, msg: &str) -> Result<String> {
-        let response = self.send(&msg).await?;
+        let response = self.send(msg).await?;
         let contents = parse_response(&response);
 
         Ok(contents)
@@ -165,7 +165,7 @@ impl RubinClient {
             return Ok(String::from(""));
         }
 
-        let response = String::from_utf8_lossy(&mut buffer[..n_bytes]);
+        let response = String::from_utf8_lossy(&buffer[..n_bytes]);
 
         Ok(response.to_string())
     }

@@ -21,7 +21,7 @@ use tokio::{
 
 /// Sends a formatted response to the client prefixed with the [`Operation`] tag
 async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
-    let response = format!("{}::{}\n", code.to_string(), msg);
+    let response = format!("{}::{}\n", code, msg);
     client
         .write_all(response.as_bytes())
         .await
@@ -90,7 +90,7 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
             }
         }
         Operation::StringClear => {
-            if let Ok(_) = vault.clear_strings() {
+            if vault.clear_strings().is_ok() {
                 send_response(&mut client, message.op, "OK").await;
             }
         }
