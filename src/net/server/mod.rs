@@ -98,8 +98,6 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
             send_response(&mut client, Operation::Noop, "nothing to do").await;
         }
     }
-
-    dbg!(&vault.strings);
 }
 
 /// Starts the server to accept clients
@@ -131,7 +129,7 @@ pub async fn start(addr: &str, port: usize) -> std::io::Result<()> {
     let addr = format!("{}:{}", addr, port);
     let listener = TcpListener::bind(&addr).await?;
 
-    dbg!("Started Rubin server");
+    println!("Started Rubin server at {}", addr);
     loop {
         let (client, _) = listener.accept().await?;
         let store = Arc::clone(&store);
