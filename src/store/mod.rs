@@ -41,7 +41,7 @@ pub struct MemStore {
 impl MemStore {
     /// Constructs a default store of values
     ///
-    /// # Exmaples
+    /// # Examples
     ///
     /// ```
     /// use rubin::store::MemStore;
