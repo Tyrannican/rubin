@@ -1,4 +1,4 @@
-//! File-handling operations used by the [`PersistentStore`]
+//! File-handling operations used by the [`super::PersistentStore`]
 //!
 //! Just a collection of File I/O helpers, nothing more, nothing less
 
@@ -133,7 +133,6 @@ mod fh_tests {
         let contents = load_store(&rubinstore).await?;
         let other: MemStore = serde_json::from_str(&contents)?;
         assert!(ms.strings.inner == other.strings.inner);
-        // FIXME
 
         Ok(())
     }

@@ -1,3 +1,34 @@
+//! In-memory data store for a collection of types.
+//!
+//! Stores items of different types in a key-value store accessible via a key.
+//!
+//! # Supported types:
+//!
+//! * `Strings`: Store string values
+//!
+//! # Future supported types:
+//!
+//! * `Lists`: Store for a `Vec<T>` of items with `T` being a generic type
+//! * `HashMap`: Store a `HashMap` of values
+//! * `Set`: Store a `Set` of values
+//!
+//! As development continues, more features will be added.
+//!
+//! # Example
+//!
+//! ```
+//! use rubin::store::mem::MemStore;
+//!
+//! let mut ms = MemStore::new();
+//!
+//! // Add a value to the store
+//! ms.insert_string("key", "value");
+//!
+//! // Retrieve a value from the store
+//! let result = ms.get_string("key").unwrap();
+//! assert_eq!(&result, "value");
+//! ```
+
 use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
@@ -11,7 +42,7 @@ use crate::store::InnerStore;
 /// as development continues.
 #[derive(Default, Serialize, Deserialize)]
 pub struct MemStore {
-    /// Key-value store of string values
+    /// Key-value store of `String` values
     pub strings: InnerStore<String>,
 }
 

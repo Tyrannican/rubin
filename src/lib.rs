@@ -15,7 +15,7 @@
 //!
 //! ## Usage as an In-Memory store
 //!
-//! This is the default use-case in which the [`store::MemStore`] is used as the key-value store.
+//! This is the default use-case in which the [`store::mem::MemStore`] is used as the key-value store.
 //! Values can be added and retrieved when needed and all data is lost upon the Store being
 //! dropped.
 //!
@@ -79,7 +79,7 @@
 //! The library also offers the ability to operate the store as in-memory network storage using TCP
 //! sockets facilitated by [`tokio::net`].
 //!
-//! A server can be started which will operate a [`store::MemStore`] which can be communicated with
+//! A server can be started which will operate a [`store::mem::MemStore`] which can be communicated with
 //! via the [`net::client::RubinClient`] that can be used to store and retrieve values from the
 //! server.
 //!
