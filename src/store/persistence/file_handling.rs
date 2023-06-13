@@ -1,4 +1,4 @@
-//! File-handling operations used by the [`PersistentStore`]
+//! File-handling operations used by the [`super::PersistentStore`]
 //!
 //! Just a collection of File I/O helpers, nothing more, nothing less
 
@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use crate::store::MemStore;
+use crate::store::mem::MemStore;
 
 /// Creates a directory at the given location
 pub async fn create_directory<P: AsRef<Path>>(location: P) -> Result<PathBuf> {
@@ -50,7 +50,6 @@ pub async fn write_store(path: &Path, store: &MemStore) -> Result<()> {
 #[cfg(test)]
 mod fh_tests {
     use super::*;
-    use std::collections::HashMap;
     use std::io;
     use std::path::PathBuf;
     use tempdir::TempDir;
@@ -132,9 +131,8 @@ mod fh_tests {
         assert!(rubinstore.exists());
 
         let contents = load_store(&rubinstore).await?;
-        let hs: HashMap<String, HashMap<String, String>> = serde_json::from_str(&contents)?;
-        let strings = hs.get("strings").unwrap();
-        assert!(*strings == ms.strings);
+        let other: MemStore = serde_json::from_str(&contents)?;
+        assert!(ms.strings.inner == other.strings.inner);
 
         Ok(())
     }
