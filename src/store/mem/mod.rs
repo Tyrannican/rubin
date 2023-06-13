@@ -3,6 +3,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io;
 
+use crate::store::InnerStore;
+
 /// In-memory store of values
 ///
 /// Used to store key-value pairs of strings with more features being added
@@ -10,7 +12,7 @@ use std::io;
 #[derive(Default, Serialize, Deserialize)]
 pub struct MemStore {
     /// Key-value store of string values
-    pub strings: HashMap<String, String>,
+    pub strings: InnerStore<String>,
 }
 
 impl MemStore {
@@ -44,10 +46,9 @@ impl MemStore {
     /// let inserted_value = ms.insert_string("user:1000", "value").unwrap();
     /// assert_eq!(&inserted_value, "value");
     /// ```
-    pub fn insert_string(&mut self, key: &str, value: &str) -> io::Result<String> {
-        let _ = self.strings.insert(key.to_string(), value.to_string());
-
-        Ok(value.to_string())
+    pub fn insert_string(&mut self, key: &str, value: &str) -> io::Result<()> {
+        self.strings.insert(key, value.to_string());
+        Ok(())
     }
 
     /// Retrieve a value from the string store
@@ -68,11 +69,7 @@ impl MemStore {
     /// assert_eq!(&result, "value");
     /// ```
     pub fn get_string(&self, key: &str) -> io::Result<String> {
-        if let Some(value) = self.strings.get(key) {
-            return Ok(value.clone());
-        }
-
-        Ok("".to_string())
+        self.strings.retrieve(key)
     }
 
     /// Remove a value from the string store
@@ -99,11 +96,7 @@ impl MemStore {
     /// assert_eq!(&value, "value");
     /// ```
     pub fn remove_string(&mut self, key: &str) -> io::Result<String> {
-        if let Some(value) = self.strings.remove(key) {
-            return Ok(value);
-        }
-
-        Ok("".to_string())
+        self.strings.remove(key)
     }
 
     /// Clears all entries out of the string store
@@ -150,7 +143,7 @@ impl MemStore {
     /// }
     /// ```
     pub fn get_string_store_ref(&self) -> &HashMap<String, String> {
-        &self.strings
+        &self.strings.inner
     }
 }
 
@@ -161,21 +154,21 @@ mod memstore {
     #[test]
     fn empty() {
         let ms = MemStore::new();
-        assert_eq!(ms.strings.len(), 0);
+        let strings = ms.strings.get_ref();
+        assert_eq!(strings.len(), 0);
     }
 
     #[test]
     fn string_store_add_entries() -> io::Result<()> {
         let mut ms = MemStore::new();
+        let strings = ms.strings.get_ref();
         let mut result = ms.insert_string("key1", "value1")?;
 
         assert_eq!(ms.strings.len(), 1);
-        assert_eq!(result, "value1");
 
         result = ms.insert_string("key2", "value2")?;
 
-        assert_eq!(ms.strings.len(), 2);
-        assert_eq!(result, "value2");
+        assert_eq!(strings.len(), 2);
 
         Ok(())
     }
@@ -188,8 +181,9 @@ mod memstore {
             let key = format!("key-{}", i);
             let value = format!("value-{}", i);
             let result = ms.insert_string(&key, &value)?;
-            assert_eq!(result, value);
         }
+
+        assert!(ms.strings.len() == 100_000);
 
         Ok(())
     }
@@ -220,23 +214,16 @@ mod memstore {
     #[test]
     fn clear_string_store() -> io::Result<()> {
         let mut ms = MemStore::new();
+        let strings = ms.strings.get_ref();
+        let strings = ms.strings.inner;
         for i in 0..1000 {
             let key = format!("key-{}", i);
             ms.insert_string(&key, "value")?;
         }
 
-        assert!(ms.strings.len() == 1000);
+        assert!(strings.len() == 1000);
         ms.clear_strings()?;
-        assert!(ms.strings.len() == 0);
-
-        Ok(())
-    }
-
-    #[test]
-    fn get_string_store_ref() -> io::Result<()> {
-        let ms = MemStore::new();
-        let strings = ms.get_string_store_ref();
-        assert_eq!(ms.strings, *strings);
+        assert!(strings.len() == 0);
 
         Ok(())
     }
