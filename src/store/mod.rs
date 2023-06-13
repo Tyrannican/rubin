@@ -9,7 +9,7 @@
 //! # Examples
 //!
 //! ```
-//! use rubin::store::MemStore;
+//! use rubin::store::mem::MemStore;
 //!
 //! let mut ms = MemStore::new();
 //!
@@ -43,12 +43,16 @@ where
         self.inner.len()
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.inner.is_empty()
+    }
+
     pub fn insert(&mut self, key: &str, value: T) -> io::Result<()> {
         self.inner.insert(key.to_string(), value);
         Ok(())
     }
 
-    pub fn retrieve(self, key: &str) -> io::Result<T> {
+    pub fn retrieve(&self, key: &str) -> io::Result<T> {
         if let Some(value) = self.inner.get(key) {
             return Ok(value.clone());
         }

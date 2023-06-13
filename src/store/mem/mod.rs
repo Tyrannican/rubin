@@ -21,7 +21,7 @@ impl MemStore {
     /// # Examples
     ///
     /// ```
-    /// use rubin::store::MemStore;
+    /// use rubin::store::mem::MemStore;
     ///
     /// let mut ms = MemStore::new();
     /// assert_eq!(ms.strings.len(), 0);
@@ -40,15 +40,13 @@ impl MemStore {
     /// # Examples
     ///
     /// ```
-    /// use rubin::store::MemStore;
+    /// use rubin::store::mem::MemStore;
     ///
     /// let mut ms = MemStore::new();
-    /// let inserted_value = ms.insert_string("user:1000", "value").unwrap();
-    /// assert_eq!(&inserted_value, "value");
+    /// ms.insert_string("user:1000", "value").unwrap();
     /// ```
     pub fn insert_string(&mut self, key: &str, value: &str) -> io::Result<()> {
-        self.strings.insert(key, value.to_string());
-        Ok(())
+        self.strings.insert(key, value.to_string())
     }
 
     /// Retrieve a value from the string store
@@ -60,7 +58,7 @@ impl MemStore {
     /// # Examples
     ///
     /// ```
-    /// use rubin::store::MemStore;
+    /// use rubin::store::mem::MemStore;
     ///
     /// let mut ms = MemStore::new();
     /// ms.insert_string("key", "value");
@@ -85,7 +83,7 @@ impl MemStore {
     /// # Example
     ///
     /// ```rust
-    /// use rubin::store::MemStore;
+    /// use rubin::store::mem::MemStore;
     ///
     /// let mut ms = MemStore::new();
     ///
@@ -104,7 +102,7 @@ impl MemStore {
     /// # Example
     ///
     /// ```rust
-    /// use rubin::store::MemStore;
+    /// use rubin::store::mem::MemStore;
     ///
     /// let mut ms = MemStore::new();
     ///
@@ -118,9 +116,7 @@ impl MemStore {
     /// assert_eq!(ms.strings.len(), 0);
     /// ```
     pub fn clear_strings(&mut self) -> io::Result<()> {
-        self.strings.clear();
-
-        Ok(())
+        self.strings.clear()
     }
 
     /// Gets a shared reference to the inner string store.
@@ -130,7 +126,7 @@ impl MemStore {
     /// # Example
     ///
     /// ```rust
-    /// use rubin::store::MemStore;
+    /// use rubin::store::mem::MemStore;
     ///
     /// let mut ms = MemStore::new();
     ///
@@ -143,7 +139,7 @@ impl MemStore {
     /// }
     /// ```
     pub fn get_string_store_ref(&self) -> &HashMap<String, String> {
-        &self.strings.inner
+        self.strings.get_ref()
     }
 }
 
@@ -161,14 +157,13 @@ mod memstore {
     #[test]
     fn string_store_add_entries() -> io::Result<()> {
         let mut ms = MemStore::new();
-        let strings = ms.strings.get_ref();
-        let mut result = ms.insert_string("key1", "value1")?;
+        ms.insert_string("key1", "value1")?;
 
         assert_eq!(ms.strings.len(), 1);
 
-        result = ms.insert_string("key2", "value2")?;
+        ms.insert_string("key2", "value2")?;
 
-        assert_eq!(strings.len(), 2);
+        assert_eq!(ms.strings.len(), 2);
 
         Ok(())
     }
@@ -180,7 +175,7 @@ mod memstore {
         for i in 0..100_000 {
             let key = format!("key-{}", i);
             let value = format!("value-{}", i);
-            let result = ms.insert_string(&key, &value)?;
+            ms.insert_string(&key, &value)?;
         }
 
         assert!(ms.strings.len() == 100_000);
@@ -214,16 +209,14 @@ mod memstore {
     #[test]
     fn clear_string_store() -> io::Result<()> {
         let mut ms = MemStore::new();
-        let strings = ms.strings.get_ref();
-        let strings = ms.strings.inner;
         for i in 0..1000 {
             let key = format!("key-{}", i);
             ms.insert_string(&key, "value")?;
         }
 
-        assert!(strings.len() == 1000);
+        assert!(ms.strings.len() == 1000);
         ms.clear_strings()?;
-        assert!(strings.len() == 0);
+        assert!(ms.strings.len() == 0);
 
         Ok(())
     }

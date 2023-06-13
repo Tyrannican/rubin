@@ -20,7 +20,7 @@
 //! dropped.
 //!
 //! ```rust
-//! use rubin::store::MemStore;
+//! use rubin::store::mem::MemStore;
 //!
 //! let mut ms = MemStore::new();
 //!
