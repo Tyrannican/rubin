@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-use crate::store::MemStore;
+use crate::store::mem::MemStore;
 
 /// Creates a directory at the given location
 pub async fn create_directory<P: AsRef<Path>>(location: P) -> Result<PathBuf> {

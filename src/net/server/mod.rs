@@ -11,7 +11,7 @@ use std::sync::Arc;
 use crate::{
     errors::MessageError,
     net::parser::{parse_request, Operation},
-    store::MemStore,
+    store::mem::MemStore,
 };
 use tokio::{
     io::{AsyncReadExt, AsyncWriteExt},

@@ -65,8 +65,8 @@
 //! ```
 pub(crate) mod file_handling;
 
+use crate::store::mem::MemStore;
 use crate::store::persistence::file_handling::*;
-use crate::store::MemStore;
 
 use std::io;
 use std::path::{Path, PathBuf};
