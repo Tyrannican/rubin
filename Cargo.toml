@@ -19,3 +19,11 @@ tokio = { version = "1.28.1", features = ["full"] }
 
 [dev-dependencies]
 tempdir = "0.3"
+
+[[bin]]
+name = "rubin-server"
+path = "bin/rubin-server.rs"
+
+[[bin]]
+name = "rubin-cli"
+path = "bin/rubin-cli.rs"
