@@ -147,7 +147,7 @@ impl RubinClient {
     }
 
     /// Sends a request to server and parses the response
-    async fn request(&self, msg: &str) -> Result<String> {
+    pub async fn request(&self, msg: &str) -> Result<String> {
         let response = self.send(msg).await?;
         let contents = parse_response(&response);
 

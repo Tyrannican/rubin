@@ -32,7 +32,7 @@ pub enum Operation {
 impl Operation {
     /// Converts an operation from a string to an [`Operation`]
     pub fn from_string(op: &str) -> Self {
-        match op {
+        match op.to_uppercase().as_str() {
             "SET" => Self::StringSet,
             "GET" => Self::StringGet,
             "CLR" => Self::StringClear,
