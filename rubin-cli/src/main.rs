@@ -24,9 +24,9 @@ async fn main() -> io::Result<()> {
         }
         Commands::Cli(args) => {
             let client = RubinClient::new(&args.address, args.port);
+            let mut cmd = String::new();
 
             loop {
-                let mut cmd = String::new();
                 print!("> ");
                 io::stdout().flush()?;
                 io::stdin().read_line(&mut cmd)?;
@@ -40,6 +40,7 @@ async fn main() -> io::Result<()> {
                     }
                 };
                 println!("{}\n", response);
+                cmd.clear();
             }
         }
     }

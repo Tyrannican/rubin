@@ -118,11 +118,12 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
 
-    if r_split.len() < 2 {
-        return Err(MessageError::InvalidFormat);
+    let op = Operation::from_string(&r_split[0]);
+    match op {
+        Operation::Noop | Operation::StringClear => return Ok(Message { op, args: vec![] }),
+        _ => {}
     }
 
-    let op = Operation::from_string(&r_split[0]);
     let args = r_split[1]
         .split(' ')
         .map(|s| s.to_string())
