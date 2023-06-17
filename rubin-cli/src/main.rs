@@ -30,6 +30,11 @@ async fn main() -> io::Result<()> {
                 print!("> ");
                 io::stdout().flush()?;
                 io::stdin().read_line(&mut cmd)?;
+
+                if cmd.trim() == "exit" {
+                    println!("Quitting.");
+                    break;
+                }
                 let prepped_cmd = prep_input(&cmd);
 
                 let response = match client.request(&prepped_cmd).await {

@@ -42,7 +42,7 @@ mod net_integration_tests {
         let client = RubinClient::new("127.0.0.1", 9878);
         let response = client.insert_string("user:1000", "").await.unwrap();
 
-        assert_eq!(&response, "invalid message");
+        assert_eq!(&response, "message failed validation");
 
         server.abort();
     }
