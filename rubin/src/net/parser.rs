@@ -32,12 +32,13 @@ pub enum Operation {
 impl Operation {
     /// Converts an operation from a string to an [`Operation`]
     pub fn from_string(op: &str) -> Self {
-        match op {
+        match op.to_uppercase().as_str() {
             "SET" => Self::StringSet,
             "GET" => Self::StringGet,
             "CLR" => Self::StringClear,
             "RM" => Self::StringRemove,
-            _ => Self::Noop,
+            "NOOP" => Self::Noop,
+            _ => Self::Error,
         }
     }
 }
@@ -118,11 +119,17 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
         .map(|s| s.to_string())
         .collect::<Vec<String>>();
 
-    if r_split.len() < 2 {
-        return Err(MessageError::InvalidFormat);
+    let op = Operation::from_string(&r_split[0]);
+    if op == Operation::Error {
+        let err = format!("invalid operation: {}", &r_split[0]);
+        return Err(MessageError::InvalidFormat(err));
     }
 
-    let op = Operation::from_string(&r_split[0]);
+    if r_split.len() < 2 {
+        let error = MessageError::InvalidFormat("not enough arguments for operation".to_string());
+        return Err(error);
+    }
+
     let args = r_split[1]
         .split(' ')
         .map(|s| s.to_string())
@@ -131,7 +138,9 @@ pub fn parse_request(req: &str) -> Result<Message, MessageError> {
     let msg = Message { op, args };
 
     if !msg.validate() {
-        return Err(MessageError::InvalidMessage);
+        return Err(MessageError::InvalidMessage(
+            "message failed validation".to_string(),
+        ));
     }
 
     Ok(msg)
@@ -166,7 +175,7 @@ mod tests {
 
     #[test]
     fn create_appropriate_operation() {
-        let op_codes = vec!["SET", "GET", "RM", "CLR", "SOMETHING"];
+        let op_codes = vec!["SET", "GET", "RM", "CLR", "NOOP", "SOMETHING"];
         for op in op_codes {
             let code: Operation = Operation::from_string(op);
 
@@ -175,7 +184,8 @@ mod tests {
                 "GET" => assert!(code == Operation::StringGet),
                 "RM" => assert!(code == Operation::StringRemove),
                 "CLR" => assert!(code == Operation::StringClear),
-                _ => assert!(code == Operation::Noop),
+                "NOOP" => assert!(code == Operation::Noop),
+                _ => assert!(code == Operation::Error),
             }
         }
     }
@@ -271,14 +281,20 @@ mod tests {
     fn detects_an_invalid_message() {
         let request = "SET::arg1";
         let result = parse_request(request).unwrap_err();
-        assert_eq!(result, MessageError::InvalidMessage);
+        assert_eq!(
+            result,
+            MessageError::InvalidMessage("message failed validation".to_string())
+        );
     }
 
     #[test]
     fn parse_invalid_requests() {
         let request = "SGET:argumetns blahg";
         let result = parse_request(request).unwrap_err();
-        assert_eq!(result, MessageError::InvalidFormat);
+        assert_eq!(
+            result,
+            MessageError::InvalidFormat("invalid operation: SGET:argumetns blahg".to_string())
+        );
     }
 
     #[test]

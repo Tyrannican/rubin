@@ -14,8 +14,8 @@
 #[derive(Debug, Clone, PartialEq)]
 pub enum MessageError {
     /// Format of the message is not what was expected by the server
-    InvalidFormat,
+    InvalidFormat(String),
 
     /// Constructed message  has failed the validation checks
-    InvalidMessage,
+    InvalidMessage(String),
 }

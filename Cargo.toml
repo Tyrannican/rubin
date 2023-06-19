@@ -1,21 +1,5 @@
-[package]
-name = "rubin"
-version = "0.3.0"
-edition = "2021"
-authors = ["Graham Keenan graham.keenan@outlook.com"]
-license = "MIT OR Apache-2.0"
-description = "In-memory key-value store with the option for persistence"
-readme = "README.md"
-documentation = "https://docs.rs/rubin"
-homepage = "https://github.com/Tyrannican/rubin"
-repository = "https://github.com/Tyrannican/rubin"
-keywords = ["in-memory", "persistence", "store", "cache"]
-categories = ["caching", "data-structures"]
-
-[dependencies]
-serde = { version = "1.0.163", features = ["derive"] }
-serde_json = "1.0.96"
-tokio = { version = "1.28.1", features = ["full"] }
-
-[dev-dependencies]
-tempdir = "0.3"
+[workspace]
+members = [
+    "rubin",
+    "rubin-cli"
+]
