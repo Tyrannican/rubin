@@ -16,6 +16,8 @@ categories = ["caching", "data-structures"]
 serde = { version = "1.0.163", features = ["derive"] }
 serde_json = "1.0.96"
 tokio = { version = "1.28.1", features = ["full"] }
+tracing = "0.1.37"
+tracing-subscriber = "0.3.17"
 
 [dev-dependencies]
 tempdir = "0.3"
