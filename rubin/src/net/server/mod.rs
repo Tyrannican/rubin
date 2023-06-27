@@ -22,10 +22,12 @@ use tokio::{
 use tracing::{debug, error, info};
 use tracing_subscriber::FmtSubscriber;
 
+static INIT_TRACING: std::sync::Once = std::sync::Once::new();
 /// Sets up a global logger
 fn init_logger() {
-    let sub = FmtSubscriber::new();
-    tracing::subscriber::set_global_default(sub).expect("unable to install global subscriber");
+    INIT_TRACING.call_once(|| {
+        FmtSubscriber::builder().init();
+    })
 }
 
 /// Sends a formatted response to the client prefixed with the [`Operation`] tag
