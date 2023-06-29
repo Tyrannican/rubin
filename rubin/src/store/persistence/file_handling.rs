@@ -2,7 +2,7 @@
 //!
 //! Just a collection of File I/O helpers, nothing more, nothing less
 
-use std::io::Result;
+use std::io::{Result, Write};
 use std::path::{Path, PathBuf};
 use tokio::fs;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -43,6 +43,15 @@ pub async fn write_store(path: &Path, store: &MemStore) -> Result<()> {
     let raw = serde_json::to_string_pretty(&store)?;
     let mut file = fs::File::create(&path).await?;
     file.write_all(raw.as_bytes()).await?;
+
+    Ok(())
+}
+
+/// Serializes a [`MemStore`] and saves it to disk without async functionality
+pub fn write_store_sync(path: impl AsRef<Path>, store: &MemStore) -> Result<()> {
+    let raw = serde_json::to_string_pretty(&store)?;
+    let mut file = std::fs::File::create(&path)?;
+    file.write_all(raw.as_bytes())?;
 
     Ok(())
 }
@@ -133,6 +142,22 @@ mod fh_tests {
         let contents = load_store(&rubinstore).await?;
         let other: MemStore = serde_json::from_str(&contents)?;
         assert!(ms.strings.inner == other.strings.inner);
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn write_a_store_out_sync() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let rubinstore = td.join("rubinstore.json");
+        create_directory(&td).await?;
+
+        let mut ms = MemStore::new();
+        ms.insert_string("key1", "value1")?;
+
+        write_store_sync(&rubinstore, &ms)?;
+
+        assert!(rubinstore.exists());
 
         Ok(())
     }
