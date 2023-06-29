@@ -113,6 +113,13 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
                 info!("{} <- {}", client_address, "OK");
             }
         }
+        Operation::Dump => {
+            let filepath = &message.args[0];
+            if let Ok(_) = vault.dump_store(filepath) {
+                send_response(&mut client, message.op, "OK").await;
+                info!("{} <- {}", client_address, "OK");
+            }
+        }
         _ => {
             send_response(&mut client, Operation::Noop, "nothing to do").await;
             info!("{} <- noop", client_address);
