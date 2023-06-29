@@ -70,6 +70,14 @@ async fn main() -> io::Result<()> {
                         client.remove_string(key).await
                     }
                     Operation::StringClear => client.clear_strings().await,
+                    Operation::Dump => {
+                        if !validate_cmd_length(&cmd_split, 1) {
+                            continue;
+                        }
+
+                        let path = &cmd_split[0];
+                        client.dump_store(path).await
+                    }
                     Operation::Error => {
                         println!("invalid operation: {}\n", raw_op);
                         continue;

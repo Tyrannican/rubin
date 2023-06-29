@@ -115,7 +115,12 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
         }
         Operation::Dump => {
             let filepath = &message.args[0];
-            if let Ok(_) = vault.dump_store(filepath) {
+
+            if let Err(e) = vault.dump_store(filepath) {
+                let err_message = format!("unable to save store: {}", e);
+                send_response(&mut client, message.op, &err_message).await;
+                error!("{} <- {}", client_address, &err_message);
+            } else {
                 send_response(&mut client, message.op, "OK").await;
                 info!("{} <- {}", client_address, "OK");
             }
