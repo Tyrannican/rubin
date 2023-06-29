@@ -191,7 +191,7 @@ impl MemStore {
     /// ms.dump_store("save/path/location.json");
     /// ```
     pub fn dump_store(&self, filepath: impl AsRef<std::path::Path>) -> io::Result<()> {
-        write_store_sync(filepath, &self)
+        write_store_sync(filepath, self)
     }
 }
 

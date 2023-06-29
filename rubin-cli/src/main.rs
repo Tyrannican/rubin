@@ -38,13 +38,13 @@ async fn main() -> io::Result<()> {
                 if trimmed_cmd == "exit" {
                     println!("Quitting.");
                     break;
-                } else if trimmed_cmd.len() == 0 {
+                } else if trimmed_cmd.is_empty() {
                     continue;
                 }
 
                 let mut cmd_split: Vec<&str> = cmd.split(' ').collect();
                 let raw_op = &cmd_split.remove(0).trim();
-                let op = Operation::from_string(&raw_op);
+                let op = Operation::from_string(raw_op);
 
                 let response = match op {
                     Operation::StringGet => {
@@ -52,7 +52,7 @@ async fn main() -> io::Result<()> {
                             continue;
                         }
                         let key = &cmd_split[0];
-                        client.get_string(&key).await
+                        client.get_string(key).await
                     }
                     Operation::StringSet => {
                         if !validate_cmd_length(&cmd_split, 2) {
