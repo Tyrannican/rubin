@@ -53,4 +53,5 @@ Options:
     * `get [KEY]`: Gets a string value from the store with a given key
     * `rm [KEY]`: Removes a string value from the store with the given key
     * `clr`: Clears all values in the string store, removing the keys as well
+    * `dump`: Dump the store out to the server's disk. Folder needs to exist.
 * `exit`: Quit the CLI 

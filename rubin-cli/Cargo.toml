@@ -16,7 +16,7 @@ clap = { version = "4.3.4", features = ["derive"] }
 tokio = { version = "1.28.2", features = ["full"] }
 
 [dependencies.rubin]
-version = "0.3.0"
+version = "^0.3.1"
 path = "../rubin"
 
 [[bin]]

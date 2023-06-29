@@ -11,6 +11,7 @@ This update adds some logging into the server portion of the `net` module.
 
 * Added tracing logging to the server (Net)
 * Updated internals of error handling for the server (Net)
+* New dump command to dump the `MemStore` out to disk (Net, Non-net)
 
 ## v0.3.0
 
