@@ -5,6 +5,14 @@ Tracks changes between each release.
 Any changes referring to `Net` are related to the client/server stuff
 Any changes referring to `Non-Net` are related to the `MemStore` and `PersistentStores`
 
+## v0.3.1
+
+This update adds some logging into the server portion of the `net` module.
+
+* Added tracing logging to the server (Net)
+* Updated internals of error handling for the server (Net)
+* New dump command to dump the `MemStore` out to disk (Net, Non-net)
+
 ## v0.3.0
 
 This update reworks the internals of how the inner storage in the `MemStore` works.

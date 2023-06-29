@@ -146,6 +146,28 @@ impl RubinClient {
         self.request(&msg).await
     }
 
+    /// Sends a request to the server to dump the store out to disk.
+    /// The folder MUST exist on the host.
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::net::client::RubinClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let client = RubinClient::new("127.0.0.1", 9876);
+    ///     let result = client.dump_store("/path/on/server/to/dump.json").await?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn dump_store(&self, filepath: &str) -> Result<String> {
+        let msg = create_request(Operation::Dump, vec![filepath.to_string()]);
+
+        self.request(&msg).await
+    }
+
     /// Sends a request to server and parses the response
     pub async fn request(&self, msg: &str) -> Result<String> {
         let response = self.send(msg).await?;

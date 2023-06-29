@@ -1,15 +1,22 @@
 [package]
 name = "rubin-cli"
 version = "0.1.0"
-license = "MIT OR Apache-2.0"
 edition =  "2021"
+authors = ["Graham Keenan graham.keenan@outlook.com"]
+license = "MIT OR Apache-2.0"
+description = "CLI for the Rubin lib"
+readme = "README.md"
+homepage = "https://github.com/Tyrannican/rubin"
+repository = "https://github.com/Tyrannican/rubin"
+keywords = ["in-memory", "persistence", "store", "cache", "cli"]
+categories = ["caching", "data-structures", "command-line-interface"]
 
 [dependencies]
 clap = { version = "4.3.4", features = ["derive"] }
 tokio = { version = "1.28.2", features = ["full"] }
 
 [dependencies.rubin]
-version = "0.3.0"
+version = "^0.3.1"
 path = "../rubin"
 
 [[bin]]

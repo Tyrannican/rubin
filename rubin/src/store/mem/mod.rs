@@ -34,6 +34,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::io;
 
+use crate::store::persistence::file_handling::write_store_sync;
 use crate::store::InnerStore;
 
 /// In-memory store of values
@@ -172,11 +173,38 @@ impl MemStore {
     pub fn get_string_store_ref(&self) -> &HashMap<String, String> {
         self.strings.get_ref()
     }
+
+    /// Writes the contents of the store out to disk.
+    ///
+    /// Used in scenarios where you want to dump the contents out to disk but do not
+    /// want to run with persistence.
+    ///
+    /// # Example
+    ///
+    /// ```no_run
+    /// use rubin::store::mem::MemStore;
+    ///
+    /// let mut ms = MemStore::new();
+    ///
+    /// // ...
+    ///
+    /// ms.dump_store("save/path/location.json");
+    /// ```
+    pub fn dump_store(&self, filepath: impl AsRef<std::path::Path>) -> io::Result<()> {
+        write_store_sync(filepath, self)
+    }
 }
 
 #[cfg(test)]
 mod memstore {
     use super::*;
+    use std::path::PathBuf;
+    use tempdir::TempDir;
+
+    fn create_test_directory() -> io::Result<PathBuf> {
+        let td = TempDir::new("teststore")?;
+        Ok(td.path().to_path_buf())
+    }
 
     #[test]
     fn empty() {
@@ -248,6 +276,22 @@ mod memstore {
         assert!(ms.strings.len() == 1000);
         ms.clear_strings()?;
         assert!(ms.strings.len() == 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn dump_store_to_disk() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let rubinstore = td.join("rubinstore.json");
+        std::fs::create_dir_all(td)?;
+
+        let mut ms = MemStore::new();
+        ms.insert_string("key1", "value1")?;
+
+        ms.dump_store(&rubinstore)?;
+
+        assert!(rubinstore.exists());
 
         Ok(())
     }

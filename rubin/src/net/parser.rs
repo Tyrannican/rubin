@@ -22,6 +22,9 @@ pub enum Operation {
     /// Clear all keys and values from a string store
     StringClear,
 
+    /// Dump the store out to disk
+    Dump,
+
     /// No operation
     Noop,
 
@@ -38,6 +41,7 @@ impl Operation {
             "CLR" => Self::StringClear,
             "RM" => Self::StringRemove,
             "NOOP" => Self::Noop,
+            "DUMP" => Self::Dump,
             _ => Self::Error,
         }
     }
@@ -52,6 +56,7 @@ impl std::fmt::Display for Operation {
             Self::StringClear => write!(f, "CLR"),
             Self::Error => write!(f, "ERR"),
             Self::Noop => write!(f, "NOOP"),
+            Self::Dump => write!(f, "DUMP"),
         }
     }
 }
@@ -74,6 +79,7 @@ impl Message {
     /// * [`Operation::StringSet`] - Should have **TWO** arguments (**ONE** key and **ONE** value)
     /// * [`Operation::StringGet`] - Should have **ONE** argument (a key)
     /// * [`Operation::StringRemove`] - Should have **ONE** argument (a key)
+    /// * [`Operation::Dump`] - Should have **ONE** argument (a path)
     /// * [`Operation::StringClear`] - No validation required
     /// * [`Operation::Noop`] - No validation required
     pub fn validate(&self) -> bool {
@@ -87,7 +93,7 @@ impl Message {
                 }
             }
             // Should have ONE entry - a key
-            Operation::StringGet | Operation::StringRemove => {
+            Operation::StringGet | Operation::StringRemove | Operation::Dump => {
                 if self.args.len() == 1 {
                     valid = true;
                 }
@@ -175,7 +181,7 @@ mod tests {
 
     #[test]
     fn create_appropriate_operation() {
-        let op_codes = vec!["SET", "GET", "RM", "CLR", "NOOP", "SOMETHING"];
+        let op_codes = vec!["SET", "GET", "RM", "CLR", "NOOP", "DUMP", "SOMETHING"];
         for op in op_codes {
             let code: Operation = Operation::from_string(op);
 
@@ -185,6 +191,7 @@ mod tests {
                 "RM" => assert!(code == Operation::StringRemove),
                 "CLR" => assert!(code == Operation::StringClear),
                 "NOOP" => assert!(code == Operation::Noop),
+                "DUMP" => assert!(code == Operation::Dump),
                 _ => assert!(code == Operation::Error),
             }
         }
@@ -244,6 +251,16 @@ mod tests {
         let m = Message {
             op: Operation::Noop,
             args: vec![],
+        };
+
+        assert!(m.validate());
+    }
+
+    #[test]
+    fn validation_dump_message() {
+        let m = Message {
+            op: Operation::Dump,
+            args: vec!["/some/file/path.json".to_string()],
         };
 
         assert!(m.validate());

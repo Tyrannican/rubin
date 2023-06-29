@@ -19,6 +19,17 @@ use tokio::{
     sync::Mutex,
 };
 
+use tracing::{debug, error, info};
+use tracing_subscriber::FmtSubscriber;
+
+static INIT_TRACING: std::sync::Once = std::sync::Once::new();
+/// Sets up a global logger
+fn init_logger() {
+    INIT_TRACING.call_once(|| {
+        FmtSubscriber::builder().init();
+    })
+}
+
 /// Sends a formatted response to the client prefixed with the [`Operation`] tag
 async fn send_response(client: &mut TcpStream, code: Operation, msg: &str) {
     let response = format!("{}::{}\n", code, msg);
@@ -49,16 +60,20 @@ async fn read_from_client(client: &mut TcpStream) -> String {
 /// Processes incoming requests from the client and performs the requested operation.
 /// If the operation cannot be processed, an error is returned.
 async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
+    let client_address = client
+        .peer_addr()
+        .expect("unable to get client address")
+        .to_string();
+
     let msg = read_from_client(&mut client).await;
+    info!("{} -> {}", client_address, msg);
 
     let message = match parse_request(&msg) {
         Ok(msg) => msg,
         Err(error) => {
             match error {
-                MessageError::InvalidMessage(msg) => {
-                    send_response(&mut client, Operation::Error, &msg).await
-                }
-                MessageError::InvalidFormat(msg) => {
+                MessageError::InvalidMessage(msg) | MessageError::InvalidFormat(msg) => {
+                    error!("failed to parse message - {}", msg);
                     send_response(&mut client, Operation::Error, &msg).await
                 }
             }
@@ -74,12 +89,14 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
 
             let _ = vault.insert_string(key, value);
             send_response(&mut client, message.op, "OK").await;
+            info!("{} <- {}", client_address, "OK");
         }
         Operation::StringGet => {
             let key = &message.args[0];
 
             if let Ok(value) = vault.get_string(key) {
                 send_response(&mut client, message.op, &value).await;
+                info!("{} <- {}", client_address, &value);
             }
         }
         Operation::StringRemove => {
@@ -87,15 +104,30 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
 
             if let Ok(value) = vault.remove_string(key) {
                 send_response(&mut client, message.op, &value).await;
+                info!("{} <- {}", client_address, &value);
             }
         }
         Operation::StringClear => {
             if vault.clear_strings().is_ok() {
                 send_response(&mut client, message.op, "OK").await;
+                info!("{} <- {}", client_address, "OK");
+            }
+        }
+        Operation::Dump => {
+            let filepath = &message.args[0];
+
+            if let Err(e) = vault.dump_store(filepath) {
+                let err_message = format!("unable to save store: {}", e);
+                send_response(&mut client, message.op, &err_message).await;
+                error!("{} <- {}", client_address, &err_message);
+            } else {
+                send_response(&mut client, message.op, "OK").await;
+                info!("{} <- {}", client_address, "OK");
             }
         }
         _ => {
             send_response(&mut client, Operation::Noop, "nothing to do").await;
+            info!("{} <- noop", client_address);
         }
     }
 }
@@ -125,17 +157,18 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
 /// }
 /// ```
 pub async fn start(addr: &str, port: usize) -> std::io::Result<()> {
+    init_logger();
     let store = Arc::new(Mutex::new(MemStore::new()));
     let addr = format!("{}:{}", addr, port);
     let listener = TcpListener::bind(&addr).await?;
 
-    println!("Started Rubin server at {}", addr);
+    info!("Started Rubin server at {}", addr);
     loop {
         let (client, _) = listener.accept().await?;
         let store = Arc::clone(&store);
 
         let client_addr = client.peer_addr()?;
-        println!("Accepted new client: {}", client_addr);
+        debug!("Accepted new client: {}", client_addr);
 
         tokio::spawn(async move {
             handler(client, store).await;
