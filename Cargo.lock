@@ -387,7 +387,7 @@ dependencies = [
 
 [[package]]
 name = "rubin"
-version = "0.3.1"
+version = "0.3.2"
 dependencies = [
  "serde",
  "serde_json",
@@ -399,7 +399,7 @@ dependencies = [
 
 [[package]]
 name = "rubin-cli"
-version = "0.1.0"
+version = "0.1.1"
 dependencies = [
  "clap",
  "rubin",
