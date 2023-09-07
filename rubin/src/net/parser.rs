@@ -88,7 +88,7 @@ impl Message {
         match self.op {
             // Should have TWO entries - ONE key and ONE value
             Operation::StringSet => {
-                if self.args.len() == 2 {
+                if self.args.len() >= 2 {
                     valid = true;
                 }
             }

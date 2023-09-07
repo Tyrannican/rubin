@@ -6,13 +6,29 @@ use std::io::{self, Write};
 use rubin::net::parser::Operation;
 use rubin::net::{client::RubinClient, server::start};
 
-fn validate_cmd_length(cmds: &Vec<&str>, size: usize) -> bool {
-    if cmds.len() != size {
-        println!("incorrect argument length for operation.\n");
-        return false;
+#[derive(Debug, PartialEq)]
+enum Comparitor {
+    Eq,
+    Gte,
+}
+
+fn validate_cmd_length(cmds: &Vec<&str>, size: usize, comparitor: Comparitor) -> bool {
+    let command_length = cmds.len();
+    match comparitor {
+        Comparitor::Eq => {
+            if command_length == size {
+                return true;
+            }
+        }
+        Comparitor::Gte => {
+            if command_length >= size {
+                return true;
+            }
+        }
     }
 
-    true
+    println!("incorrect argument length for operation.\n");
+    return false;
 }
 
 #[tokio::main]
@@ -48,22 +64,22 @@ async fn main() -> io::Result<()> {
 
                 let response = match op {
                     Operation::StringGet => {
-                        if !validate_cmd_length(&cmd_split, 1) {
+                        if !validate_cmd_length(&cmd_split, 1, Comparitor::Eq) {
                             continue;
                         }
                         let key = &cmd_split[0];
                         client.get_string(key).await
                     }
                     Operation::StringSet => {
-                        if !validate_cmd_length(&cmd_split, 2) {
+                        if !validate_cmd_length(&cmd_split, 2, Comparitor::Gte) {
                             continue;
                         }
                         let key = &cmd_split[0];
-                        let value = &cmd_split[1];
+                        let value = &cmd_split[1..].join(" ");
                         client.insert_string(key, value).await
                     }
                     Operation::StringRemove => {
-                        if !validate_cmd_length(&cmd_split, 1) {
+                        if !validate_cmd_length(&cmd_split, 1, Comparitor::Eq) {
                             continue;
                         }
                         let key = &cmd_split[0];
@@ -71,7 +87,7 @@ async fn main() -> io::Result<()> {
                     }
                     Operation::StringClear => client.clear_strings().await,
                     Operation::Dump => {
-                        if !validate_cmd_length(&cmd_split, 1) {
+                        if !validate_cmd_length(&cmd_split, 1, Comparitor::Eq) {
                             continue;
                         }
 

@@ -85,7 +85,7 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
     match message.op {
         Operation::StringSet => {
             let key = &message.args[0];
-            let value = &message.args[1];
+            let value = &message.args[1..].join(" ");
 
             let _ = vault.insert_string(key, value);
             send_response(&mut client, message.op, "OK").await;
