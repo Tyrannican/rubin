@@ -3,3 +3,4 @@ members = [
     "rubin",
     "rubin-cli"
 ]
+"resolver" = "2"
