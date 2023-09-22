@@ -291,6 +291,64 @@ impl PersistentStore {
         Ok(())
     }
 
+    /// Increments a value in the store by 1
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
+    ///
+    ///     let mut value = 0;
+    ///     for _ in 0..1000 {
+    ///         value = ps.incr("view-counter").await?;
+    ///     }
+    ///     
+    ///     assert_eq!(value, 1000);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn incr(&mut self, key: impl AsRef<str>) -> io::Result<isize> {
+        let result = self.store.incr(key);
+
+        if self.write_on_update {
+            self.write().await?;
+        }
+
+        result
+    }
+
+    /// Decrements a value in the store by 1
+    ///
+    /// ```rust,no_run
+    /// use rubin::store::persistence::PersistentStore;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let mut ps = PersistentStore::new("./storage/file.json").await?;
+    ///
+    ///     let mut value = 0;
+    ///     for _ in 0..1000 {
+    ///         value = ps.incr("view-counter").await?;
+    ///     }
+    ///     
+    ///     assert_eq!(value, -1000);
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn decr(&mut self, key: impl AsRef<str>) -> io::Result<isize> {
+        let result = self.store.decr(key);
+
+        if self.write_on_update {
+            self.write().await?;
+        }
+
+        result
+    }
+
     /// Gets a reference to the inner string store.
     ///
     /// Used to get access to the inner type for more complicated operations the API doesnt
@@ -479,6 +537,58 @@ mod persistent_store {
             ps.insert_string(&key, &value).await?;
         }
 
+        assert!(ps.store.strings.len() == 100_000);
+
+        ps.write().await?;
+        assert!(rubinstore.exists());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn add_string_and_increment_counter() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let rubinstore = td.join("rubinstore.json");
+
+        let mut ps = PersistentStore::new(&rubinstore).await?;
+
+        for i in 0..100_000 {
+            let key = format!("key-{}", i);
+            let value = format!("value-{}", i);
+            ps.insert_string(&key, &value).await?;
+        }
+
+        for _ in 0..10_000 {
+            ps.incr("view-counter").await?;
+        }
+
+        assert_eq!(ps.store.counters.retrieve("view-counter").unwrap(), 10_000);
+        assert!(ps.store.strings.len() == 100_000);
+
+        ps.write().await?;
+        assert!(rubinstore.exists());
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn add_string_and_decrement_counter() -> io::Result<()> {
+        let td = create_test_directory()?;
+        let rubinstore = td.join("rubinstore.json");
+
+        let mut ps = PersistentStore::new(&rubinstore).await?;
+
+        for i in 0..100_000 {
+            let key = format!("key-{}", i);
+            let value = format!("value-{}", i);
+            ps.insert_string(&key, &value).await?;
+        }
+
+        for _ in 0..10_000 {
+            ps.decr("view-counter").await?;
+        }
+
+        assert_eq!(ps.store.counters.retrieve("view-counter").unwrap(), -10_000);
         assert!(ps.store.strings.len() == 100_000);
 
         ps.write().await?;
