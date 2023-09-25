@@ -86,6 +86,22 @@ async fn main() -> io::Result<()> {
                         client.remove_string(key).await
                     }
                     Operation::StringClear => client.clear_strings().await,
+                    Operation::Incr => {
+                        if !validate_cmd_length(&cmd_split, 1, Comparitor::Eq) {
+                            continue;
+                        }
+
+                        let key = &cmd_split[0];
+                        client.incr(key).await
+                    }
+                    Operation::Decr => {
+                        if !validate_cmd_length(&cmd_split, 1, Comparitor::Eq) {
+                            continue;
+                        }
+
+                        let key = &cmd_split[0];
+                        client.decr(key).await
+                    }
                     Operation::Dump => {
                         if !validate_cmd_length(&cmd_split, 1, Comparitor::Eq) {
                             continue;
