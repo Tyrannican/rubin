@@ -22,6 +22,12 @@ pub enum Operation {
     /// Clear all keys and values from a string store
     StringClear,
 
+    /// Increment a key in the counter store
+    Incr,
+
+    /// Decrement a key in the counter store
+    Decr,
+
     /// Dump the store out to disk
     Dump,
 
@@ -40,6 +46,8 @@ impl Operation {
             "GET" => Self::StringGet,
             "CLR" => Self::StringClear,
             "RM" => Self::StringRemove,
+            "INCR" => Self::Incr,
+            "DECR" => Self::Decr,
             "NOOP" => Self::Noop,
             "DUMP" => Self::Dump,
             _ => Self::Error,
@@ -54,6 +62,8 @@ impl std::fmt::Display for Operation {
             Self::StringGet => write!(f, "GET"),
             Self::StringRemove => write!(f, "RM"),
             Self::StringClear => write!(f, "CLR"),
+            Self::Incr => write!(f, "INCR"),
+            Self::Decr => write!(f, "DECR"),
             Self::Error => write!(f, "ERR"),
             Self::Noop => write!(f, "NOOP"),
             Self::Dump => write!(f, "DUMP"),
@@ -76,9 +86,11 @@ impl Message {
     ///
     /// # Validation Parameters
     ///
-    /// * [`Operation::StringSet`] - Should have **TWO** arguments (**ONE** key and **ONE** value)
+    /// * [`Operation::StringSet`] - Should have **AT LEAST TWO** arguments (**ONE** key and **ONE OR MORE** values)
     /// * [`Operation::StringGet`] - Should have **ONE** argument (a key)
     /// * [`Operation::StringRemove`] - Should have **ONE** argument (a key)
+    /// * [`Operation::Incr`] - Should have **ONE** argument (a key)
+    /// * [`Operation::Decr`] - Should have **ONE** argument (a key)
     /// * [`Operation::Dump`] - Should have **ONE** argument (a path)
     /// * [`Operation::StringClear`] - No validation required
     /// * [`Operation::Noop`] - No validation required
@@ -86,14 +98,18 @@ impl Message {
         let mut valid = false;
 
         match self.op {
-            // Should have TWO entries - ONE key and ONE value
+            // Should have AT LEAST TWO entries - ONE key and ONE OR MORE values
             Operation::StringSet => {
                 if self.args.len() >= 2 {
                     valid = true;
                 }
             }
             // Should have ONE entry - a key
-            Operation::StringGet | Operation::StringRemove | Operation::Dump => {
+            Operation::StringGet
+            | Operation::StringRemove
+            | Operation::Dump
+            | Operation::Incr
+            | Operation::Decr => {
                 if self.args.len() == 1 {
                     valid = true;
                 }
@@ -181,7 +197,17 @@ mod tests {
 
     #[test]
     fn create_appropriate_operation() {
-        let op_codes = vec!["SET", "GET", "RM", "CLR", "NOOP", "DUMP", "SOMETHING"];
+        let op_codes = vec![
+            "SET",
+            "GET",
+            "RM",
+            "CLR",
+            "NOOP",
+            "INCR",
+            "DECR",
+            "DUMP",
+            "SOMETHING",
+        ];
         for op in op_codes {
             let code: Operation = Operation::from_string(op);
 
@@ -190,6 +216,8 @@ mod tests {
                 "GET" => assert!(code == Operation::StringGet),
                 "RM" => assert!(code == Operation::StringRemove),
                 "CLR" => assert!(code == Operation::StringClear),
+                "INCR" => assert!(code == Operation::Incr),
+                "DECR" => assert!(code == Operation::Decr),
                 "NOOP" => assert!(code == Operation::Noop),
                 "DUMP" => assert!(code == Operation::Dump),
                 _ => assert!(code == Operation::Error),
@@ -241,6 +269,26 @@ mod tests {
         let m = Message {
             op: Operation::StringClear,
             args: vec![],
+        };
+
+        assert!(m.validate());
+    }
+
+    #[test]
+    fn validate_increment() {
+        let m = Message {
+            op: Operation::Incr,
+            args: vec!["arg1".to_string()],
+        };
+
+        assert!(m.validate());
+    }
+
+    #[test]
+    fn validate_decrement() {
+        let m = Message {
+            op: Operation::Decr,
+            args: vec!["arg1".to_string()],
         };
 
         assert!(m.validate());

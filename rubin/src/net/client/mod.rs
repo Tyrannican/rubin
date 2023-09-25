@@ -125,6 +125,48 @@ impl RubinClient {
         self.request(&msg).await
     }
 
+    /// Sends a request to the server to increment a value in the counter store
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::net::client::RubinClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let client = RubinClient::new("127.0.0.1", 9876);
+    ///     let result = client.incr("view-counter").await?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn incr(&self, key: &str) -> Result<String> {
+        let msg = create_request(Operation::Incr, vec![key.to_string()]);
+
+        self.request(&msg).await
+    }
+
+    /// Sends a request to the server to decrement a value in the counter store
+    ///
+    /// # Example
+    ///
+    /// ```rust,no_run
+    /// use rubin::net::client::RubinClient;
+    ///
+    /// #[tokio::main]
+    /// async fn main() -> std::io::Result<()> {
+    ///     let client = RubinClient::new("127.0.0.1", 9876);
+    ///     let result = client.decr("view-counter").await?;
+    ///
+    ///     Ok(())
+    /// }
+    /// ```
+    pub async fn decr(&self, key: &str) -> Result<String> {
+        let msg = create_request(Operation::Decr, vec![key.to_string()]);
+
+        self.request(&msg).await
+    }
+
     /// Sends a request to the server to clear all keys and values from the string store
     ///
     /// # Example

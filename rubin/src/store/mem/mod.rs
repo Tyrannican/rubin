@@ -45,6 +45,9 @@ use crate::store::InnerStore;
 pub struct MemStore {
     /// Key-value store of `String` values
     pub strings: InnerStore<String>,
+
+    /// Key-value store of values to be incremented / decremented
+    pub counters: InnerStore<isize>,
 }
 
 impl MemStore {
@@ -174,6 +177,66 @@ impl MemStore {
         self.strings.get_ref()
     }
 
+    /// Increments the value of a given key by 1
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rubin::store::mem::MemStore;
+    ///
+    /// let mut ms = MemStore::new();
+    ///
+    /// let mut value = 0;
+    /// for i in 0..100 {
+    ///     value = ms.incr("view-count").unwrap()
+    /// }
+    ///
+    /// assert_eq!(ms.counters.retrieve("view-count").unwrap(), 100);
+    /// ```
+    pub fn incr(&mut self, key: impl AsRef<str>) -> io::Result<isize> {
+        self.counters
+            .inner
+            .entry(key.as_ref().to_string())
+            .and_modify(|count| *count += 1)
+            .or_insert(1);
+
+        let count = self.counters.retrieve(key.as_ref())?;
+
+        Ok(count)
+    }
+
+    /// Decrements the value of a given key by 1
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use rubin::store::mem::MemStore;
+    ///
+    /// let mut ms = MemStore::new();
+    ///
+    /// let mut value = 0;
+    /// for i in 0..100 {
+    ///     value = ms.incr("view-count").unwrap()
+    /// }
+    ///
+    /// for i in 0..100 {
+    ///     value = ms.decr("view-count").unwrap();
+    /// }
+    ///
+    /// assert_eq!(ms.counters.retrieve("view-count").unwrap(), 0);
+    /// ```
+    pub fn decr(&mut self, key: impl AsRef<str>) -> io::Result<isize> {
+        self.counters
+            .inner
+            .entry(key.as_ref().to_string())
+            .and_modify(|count| *count -= 1)
+            .or_insert(-1);
+
+        let count = self.counters.retrieve(key.as_ref())?;
+
+        Ok(count)
+    }
+
     /// Writes the contents of the store out to disk.
     ///
     /// Used in scenarios where you want to dump the contents out to disk but do not
@@ -276,6 +339,82 @@ mod memstore {
         assert!(ms.strings.len() == 1000);
         ms.clear_strings()?;
         assert!(ms.strings.len() == 0);
+
+        Ok(())
+    }
+
+    #[test]
+    fn incrementer() -> io::Result<()> {
+        let mut ms = MemStore::new();
+        let mut value = 0;
+
+        for _ in 0..1000 {
+            value = ms.incr("view-counter")?;
+        }
+
+        assert_eq!(value, 1000);
+
+        let stored_value = ms.counters.retrieve("view-counter")?;
+        assert_eq!(value, stored_value);
+
+        Ok(())
+    }
+
+    #[test]
+    fn incrementer_multiple_keys() -> io::Result<()> {
+        let mut ms = MemStore::new();
+
+        for _ in 0..3 {
+            ms.incr("key-1")?;
+        }
+
+        for _ in 0..5 {
+            ms.incr("key-2")?;
+        }
+
+        let key1 = ms.counters.retrieve("key-1")?;
+        let key2 = ms.counters.retrieve("key-2")?;
+
+        assert_eq!(key1, 3);
+        assert_eq!(key2, 5);
+
+        Ok(())
+    }
+
+    #[test]
+    fn decrementer() -> io::Result<()> {
+        let mut ms = MemStore::new();
+        let mut value = 0;
+
+        for _ in 0..1000 {
+            value = ms.decr("view-counter")?;
+        }
+
+        assert_eq!(value, -1000);
+
+        let stored_value = ms.counters.retrieve("view-counter")?;
+        assert_eq!(value, stored_value);
+
+        Ok(())
+    }
+
+    #[test]
+    fn decrementer_multiple_keys() -> io::Result<()> {
+        let mut ms = MemStore::new();
+
+        for _ in 0..3 {
+            ms.decr("key-1")?;
+        }
+
+        for _ in 0..5 {
+            ms.decr("key-2")?;
+        }
+
+        let key1 = ms.counters.retrieve("key-1")?;
+        let key2 = ms.counters.retrieve("key-2")?;
+
+        assert_eq!(key1, -3);
+        assert_eq!(key2, -5);
 
         Ok(())
     }
