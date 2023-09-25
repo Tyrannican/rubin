@@ -5,6 +5,23 @@ Tracks changes between each release.
 Any changes referring to `Net` are related to the client/server stuff
 Any changes referring to `Non-Net` are related to the `MemStore` and `PersistentStores`
 
+## v0.4.0
+
+Added support for two new features: INCR and DECR.
+
+A new counter store was added which keeps track of counters associated with given values (i.e keys).
+INCR increments a given value by one and DECR decrements a given value by one.
+Not _that_ big of an update but still, support for more Redis-like things!
+
+* Added new INCR and DECR commands to increment and decrement values in Rubin (Net / Non-Net)
+    * New store was added to hold these values
+    * Each value is incremented / decremented by one on each call
+* Minor fixes / improvements
+
+## v0.3.2
+
+This updated fixed an issue with passing multiple values when adding to the string store.
+
 ## v0.3.1
 
 This update adds some logging into the server portion of the `net` module.
