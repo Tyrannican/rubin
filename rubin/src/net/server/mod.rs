@@ -113,6 +113,22 @@ async fn handler(mut client: TcpStream, store: Arc<Mutex<MemStore>>) {
                 info!("{} <- {}", client_address, "OK");
             }
         }
+        Operation::Incr => {
+            let key = &message.args[0];
+
+            if let Ok(value) = vault.incr(key) {
+                send_response(&mut client, message.op, &value.to_string()).await;
+                info!("{} <- {}", client_address, &value);
+            }
+        }
+        Operation::Decr => {
+            let key = &message.args[0];
+
+            if let Ok(value) = vault.decr(key) {
+                send_response(&mut client, message.op, &value.to_string()).await;
+                info!("{} <- {}", client_address, &value);
+            }
+        }
         Operation::Dump => {
             let filepath = &message.args[0];
 
